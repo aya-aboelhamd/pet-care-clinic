@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Petlor - Report Lost Pet</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --primary-green: #589A64;
+            --bg-light: #F8FAF8;
+            --sidebar-width: 240px;
+            --text-dark: #1A1A1A;
+            --text-gray: #666;
+            --border-color: #E0E0E0;
+            --warning-bg: #FFFBEB;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
+        body { background-color: var(--bg-light); display: flex; height: 100vh; overflow: hidden; }
+
+        /* --- Sidebar --- */
+        .sidebar { width: var(--sidebar-width); background: white; border-right: 1px solid var(--border-color); display: flex; flex-direction: column; padding: 1.5rem 0; flex-shrink: 0; }
+        .sidebar-logo { padding: 0 1.5rem 2rem; font-weight: 700; font-size: 1.2rem; display: flex; align-items: center; gap: 10px; }
+        .nav-item { padding: 0.8rem 1.5rem; display: flex; align-items: center; gap: 12px; text-decoration: none; color: var(--text-gray); font-size: 0.9rem; font-weight: 500; }
+        .nav-item.active { background-color: var(--primary-green); color: white; margin: 0 10px; border-radius: 8px; }
+
+        /* --- Main Content --- */
+        .main-content { flex-grow: 1; overflow-y: auto; }
+        header { background: white; padding: 0.8rem 2rem; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); position: sticky; top: 0; z-index: 10; }
+        
+        .content-padding { padding: 2rem; max-width: 1000px; margin: 0 auto; }
+
+        .page-header { margin-bottom: 2rem; }
+        .page-header h1 { color: var(--text-dark); font-size: 1.8rem; margin-bottom: 8px; }
+        .page-header p { color: var(--text-gray); font-size: 0.95rem; }
+
+        .report-grid { display: grid; grid-template-columns: 1fr 350px; gap: 2rem; }
+        
+        .card { background: white; border: 1px solid var(--border-color); border-radius: 15px; padding: 1.5rem; margin-bottom: 1.5rem; }
+        .card-title { font-weight: 700; font-size: 1rem; margin-bottom: 1.2rem; display: flex; align-items: center; gap: 10px; color: var(--text-dark); }
+
+        /* --- Form Elements --- */
+        .form-group { margin-bottom: 1.2rem; }
+        .form-label { display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 6px; color: var(--text-dark); }
+        .form-input, .form-select, .form-textarea { width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 8px; outline: none; font-size: 0.9rem; transition: 0.2s; }
+        .form-input:focus, .form-select:focus, .form-textarea:focus { border-color: var(--primary-green); box-shadow: 0 0 0 3px rgba(88, 154, 100, 0.1); }
+        .form-textarea { resize: none; height: 100px; }
+
+        /* --- Custom Photo Upload --- */
+        .photo-upload-zone { border: 2px dashed #CBD5E1; border-radius: 12px; padding: 2.5rem 1rem; text-align: center; cursor: pointer; transition: 0.2s; background: #FBFDFB; }
+        .photo-upload-zone:hover { background: #F0F7F1; border-color: var(--primary-green); }
+        .photo-upload-zone i { font-size: 2.5rem; color: var(--primary-green); margin-bottom: 12px; opacity: 0.7; }
+
+        .btn-submit { background: var(--primary-green); color: white; border: none; padding: 14px; border-radius: 8px; font-weight: 700; cursor: pointer; width: 100%; font-size: 0.95rem; transition: 0.3s; }
+        .btn-submit:hover { background: #467B50; transform: translateY(-1px); }
+
+        .info-alert { background: #F0F7F1; border: 1px solid #D1E7D5; padding: 1rem; border-radius: 10px; margin-bottom: 2rem; font-size: 0.85rem; color: #3E6D47; display: flex; gap: 12px; align-items: center; }
+    </style>
+</head>
+<body>
+
+    <div class="sidebar">
+        <div class="sidebar-logo"><i class="fa-solid fa-paw"></i> Petlor</div>
+         <a href="petownerDashboard.html" class="nav-item"><i class="fa-solid fa-table-columns"></i> Dashboard</a>
+        <a href="mypets.html" class="nav-item"><i class="fa-solid fa-paw"></i> My Pets</a>
+        <a href="vaccination.html" class="nav-item"><i class="fa-solid fa-syringe"></i> Vaccinations</a>
+        <a href="marketplace.html" class="nav-item"><i class="fa-solid fa-store"></i> Marketplace</a>
+        <a href="checkout.html" class="nav-item"><i class="fa-solid fa-cart-shopping"></i> Cart & Checkout</a>
+        <a href="booking.html" class="nav-item"><i class="fa-solid fa-calendar-check"></i> Book a Service</a>
+        <a href="reportLostPet.html" class="nav-item active"><i class="fa-solid fa-bullhorn"></i> Report Lost Pet</a>
+    </div>
+
+    <div class="main-content">
+        <header>
+            <div style="color: #666; font-size: 0.8rem;">Emergency / <strong>Report Lost Pet</strong></div>
+            <div class="user-profile" style="display: flex; align-items: center; gap: 12px;">
+                <i class="fa-regular fa-bell"></i>
+                <div style="width: 32px; height: 32px; background: var(--primary-green); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.8rem;">SJ</div>
+                <div style="font-size: 0.85rem;"><strong>Sarah Johnson</strong></div>
+            </div>
+        </header>
+
+        <div class="content-padding">
+            <div class="page-header">
+                <h1>Report a Lost Pet</h1>
+                <p>Broadcasting this report will alert local pet owners and veterinary clinics.</p>
+            </div>
+
+            <div class="info-alert">
+                <i class="fa-solid fa-circle-info" style="font-size: 1.2rem;"></i>
+                <p>Information provided here will be public on the "Found Pets" board. Please double-check your contact number.</p>
+            </div>
+
+            <div class="report-grid">
+                <div class="form-col">
+                    <div class="card">
+                        <div class="card-title"><i class="fa-solid fa-paw"></i> Pet Details</div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                            <div class="form-group">
+                                <label class="form-label">Select Registered Pet</label>
+                                <select class="form-select">
+                                    <option>Max (Golden Retriever)</option>
+                                    <option>Bella (Cat)</option>
+                                    <option>Not Registered / Other</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Collar / Harness Color</label>
+                                <input type="text" class="form-input" placeholder="e.g. Red leather collar">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Distinctive Features</label>
+                            <textarea class="form-textarea" placeholder="Describe unique marks, behavior, or medical needs..."></textarea>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-title"><i class="fa-solid fa-location-dot"></i> Last Seen Details</div>
+                        <div class="form-group">
+                            <label class="form-label">Exact Location / Area</label>
+                            <input type="text" class="form-input" placeholder="e.g. Central Park West Entrance">
+                        </div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                            <div class="form-group">
+                                <label class="form-label">Date Lost</label>
+                                <input type="date" class="form-input">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Approximate Time</label>
+                                <input type="time" class="form-input">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="sidebar-col">
+                    <div class="card">
+                        <div class="card-title"><i class="fa-solid fa-image"></i> Recent Photo</div>
+                        <div class="photo-upload-zone">
+                            <i class="fa-solid fa-camera"></i>
+                            <p style="font-size: 0.85rem; font-weight: 500; color: var(--text-dark);">Upload Photo</p>
+                            <p style="font-size: 0.75rem; color: var(--text-gray); margin-top: 5px;">Best for identification</p>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-title"><i class="fa-solid fa-phone"></i> Contact Details</div>
+                        <div class="form-group">
+                            <label class="form-label">Contact Number</label>
+                            <input type="tel" class="form-input" value="+1 234 567 890">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Reward Amount (Optional)</label>
+                            <div style="position: relative; display: flex; align-items: center;">
+                                <span style="position: absolute; left: 12px; font-weight: 700; color: var(--text-gray);">$</span>
+                                <input type="number" class="form-input" style="padding-left: 28px;" placeholder="0.00">
+                            </div>
+                        </div>
+                        <button type="submit" class="btn-submit">Launch Alert Now</button>
+                        <p style="text-align: center; font-size: 0.7rem; color: var(--text-gray); margin-top: 15px;">
+                            <i class="fa-solid fa-shield-halved"></i> Secured by Petlor Emergency Response
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>

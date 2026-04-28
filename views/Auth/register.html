@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Petlor - Create Account</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body, html {
+            height: 100%;
+            width: 100%;
+            display: flex;
+        }
+
+        /* حاوية الصفحة الرئيسية */
+        .container {
+            display: flex;
+            width: 100%;
+            height: 100vh;
+        }
+
+        /* الجانب الأيسر - الأخضر */
+        .left-panel {
+            background-color: #589A64;
+            width: 50%;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: 4rem;
+            position: relative;
+        }
+
+        .logo {
+            position: absolute;
+            top: 2.5rem;
+            left: 3rem;
+            font-size: 1.5rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            letter-spacing: -0.5px;
+        }
+
+        .logo i {
+            color: black;
+            font-size: 1.8rem;
+        }
+
+        .hero-content h1 {
+            font-size: 2.8rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            letter-spacing: -1px;
+        }
+
+        .hero-content p {
+            font-size: 1.1rem;
+            line-height: 1.5;
+            color: rgba(255, 255, 255, 0.9);
+            max-width: 85%;
+        }
+
+        .footer-text {
+            position: absolute;
+            bottom: 2.5rem;
+            left: 3rem;
+            font-size: 0.85rem;
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        /* الجانب الأيمن - الأبيض */
+        .right-panel {
+            background-color: #F8FAF8;
+            width: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .form-card {
+            background: white;
+            padding: 2.5rem 3rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+            width: 100%;
+            max-width: 480px;
+        }
+
+        .form-card h2 {
+            font-size: 1.8rem;
+            color: #1A1A1A;
+            margin-bottom: 0.3rem;
+        }
+
+        .form-card .subtitle {
+            color: #666;
+            font-size: 0.9rem;
+            margin-bottom: 2rem;
+        }
+
+        .input-group {
+            margin-bottom: 1.2rem;
+        }
+
+        .input-group label {
+            display: block;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 0.5rem;
+        }
+
+        .input-group input[type="text"],
+        .input-group input[type="email"],
+        .input-group input[type="password"] {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border: 1px solid #E0E0E0;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .input-group input:focus {
+            border-color: #589A64;
+        }
+
+        .radio-section-label {
+            display: block;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 0.5rem;
+            margin-top: 1.5rem;
+        }
+
+        .radio-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 2rem;
+        }
+
+        .radio-box {
+            display: flex;
+            align-items: center;
+            padding: 0.7rem 1rem;
+            border: 1px solid #E0E0E0;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 0.9rem;
+            color: #333;
+        }
+
+        /* تغيير لون الإطار عند اختيار الراديو */
+        .radio-box:has(input[type="radio"]:checked) {
+            border-color: #589A64;
+        }
+
+        .radio-box input[type="radio"] {
+            margin-right: 10px;
+            accent-color: #589A64;
+            width: 16px;
+            height: 16px;
+        }
+
+        .submit-btn {
+            width: 100%;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 0.85rem;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            margin-bottom: 1.5rem;
+        }
+
+        .submit-btn:hover {
+            background-color: #45a049;
+        }
+
+        .login-link {
+            text-align: center;
+            font-size: 0.9rem;
+            color: #666;
+        }
+
+        .login-link a {
+            color: #589A64;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .login-link a:hover {
+            text-decoration: underline;
+        }
+
+        /* لجعل التصميم متجاوباً مع الشاشات الصغيرة */
+        @media (max-width: 900px) {
+            .container {
+                flex-direction: column;
+            }
+            .left-panel, .right-panel {
+                width: 100%;
+                height: auto;
+            }
+            .left-panel {
+                padding: 4rem 2rem;
+                align-items: center;
+                text-align: center;
+            }
+            .logo, .footer-text {
+                position: static;
+                margin-bottom: 1rem;
+            }
+            .logo { justify-content: center; }
+            .hero-content p { max-width: 100%; }
+            .right-panel { padding: 2rem 1rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="left-panel">
+            <div class="logo">
+                <i class="fa-solid fa-paw"></i> Petlor
+            </div>
+            
+            <div class="hero-content">
+                <h1>Join the Petlor family.</h1>
+                <p>Create your free account and start caring smarter today.</p>
+            </div>
+
+            <div class="footer-text">
+                © Petlor — Smart Pet Care
+            </div>
+        </div>
+
+        <div class="right-panel">
+            <div class="form-card">
+                <h2>Create your account</h2>
+                <p class="subtitle">It only takes a minute.</p>
+
+                <form action="#" method="POST">
+                    <div class="input-group">
+                        <label>Full name</label>
+                        <input type="text" required>
+                    </div>
+
+                    <div class="input-group">
+                        <label>Email</label>
+                        <input type="email" required>
+                    </div>
+
+                    <div class="input-group">
+                        <label>Password</label>
+                        <input type="password" required>
+                    </div>
+
+                    <div class="radio-section-label">I am a</div>
+                    <div class="radio-grid">
+                        <label class="radio-box">
+                            <input type="radio" name="role" value="Pet Owner" checked>
+                            Pet Owner
+                        </label>
+                        <label class="radio-box">
+                            <input type="radio" name="role" value="Veterinarian">
+                            Veterinarian
+                        </label>
+                        <label class="radio-box">
+                            <input type="radio" name="role" value="Service Provider">
+                            Service Provider
+                        </label>
+                        <label class="radio-box">
+                            <input type="radio" name="role" value="Admin">
+                            Admin
+                        </label>
+                    </div>
+
+                    <button type="submit" class="submit-btn">Create account</button>
+
+                    <div class="login-link">
+                        Already have an account? <a href="login.html">Sign in</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>

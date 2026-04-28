@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Petlor - Marketplace</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --primary-green: #589A64;
+            --bg-light: #F8FAF8;
+            --sidebar-width: 240px;
+            --text-dark: #1A1A1A;
+            --text-gray: #666;
+            --border-color: #E0E0E0;
+            --safe-green: #DCFCE7;
+            --safe-text: #16A34A;
+            --danger-red: #FEE2E2;
+            --danger-text: #DC2626;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
+        body { background-color: var(--bg-light); display: flex; height: 100vh; overflow: hidden; }
+
+        /* --- Sidebar --- */
+        .sidebar {
+            width: var(--sidebar-width);
+            background: white;
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            padding: 1.5rem 0;
+            flex-shrink: 0;
+        }
+
+        .sidebar-logo {
+            padding: 0 1.5rem 2rem;
+            font-weight: 700;
+            font-size: 1.2rem;
+            display: flex;
+            align-items: center; gap: 10px;
+        }
+
+        .nav-item {
+            padding: 0.8rem 1.5rem;
+            display: flex;
+            align-items: center; gap: 12px;
+            text-decoration: none;
+            color: var(--text-gray);
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: 0.2s;
+        }
+
+        .nav-item.active {
+            background-color: var(--primary-green);
+            color: white;
+            margin: 0 10px;
+            border-radius: 8px;
+        }
+
+        .nav-item:hover:not(.active) { background: #f0f0f0; }
+
+        /* --- Main Content --- */
+        .main-content { flex-grow: 1; overflow-y: auto; display: flex; flex-direction: column; }
+
+        header {
+            background: white;
+            padding: 0.8rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .user-profile { display: flex; align-items: center; gap: 12px; font-size: 0.85rem; }
+        .avatar-circle { width: 35px; height: 35px; background: #4CAF50; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; }
+
+        .content-padding { padding: 2rem; }
+
+        /* --- Marketplace Header & Search --- */
+        .market-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
+        .view-cart-btn { background: white; border: 1px solid var(--border-color); padding: 0.6rem 1rem; border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 8px; font-weight: 600; }
+
+        .search-filter-row { display: flex; gap: 15px; margin-bottom: 2rem; align-items: center; }
+        .search-bar { position: relative; flex-grow: 1; }
+        .search-bar i { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: #999; }
+        .search-bar input { width: 100%; padding: 0.75rem 1rem 0.75rem 2.5rem; border: 1px solid var(--border-color); border-radius: 10px; outline: none; font-size: 0.9rem; }
+
+        .filters { display: flex; gap: 8px; }
+        .filter-chip { padding: 0.6rem 1.2rem; border-radius: 20px; border: 1px solid var(--border-color); background: white; font-size: 0.85rem; cursor: pointer; transition: 0.2s; }
+        .filter-chip.active { background: var(--primary-green); color: white; border-color: var(--primary-green); }
+
+        /* --- Product Grid --- */
+        .products-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .product-card {
+            background: white;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .product-img-box {
+            background: #f0f4f0;
+            height: 160px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem;
+        }
+
+        .product-info { padding: 1.2rem; display: flex; flex-direction: column; flex-grow: 1; }
+        .vendor-cat { font-size: 0.7rem; color: var(--text-gray); font-weight: 700; text-transform: uppercase; margin-bottom: 5px; }
+        .product-name { font-weight: 700; font-size: 1rem; margin-bottom: 8px; color: var(--text-dark); }
+        
+        .rating { font-size: 0.85rem; margin-bottom: 12px; }
+        .rating i { color: #FFB800; }
+
+        .safety-badge {
+            padding: 8px;
+            border-radius: 8px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center; gap: 6px;
+        }
+        .safe { background: var(--safe-green); color: var(--safe-text); }
+        .unsafe { background: var(--danger-red); color: var(--danger-text); }
+
+        .price-row { display: flex; justify-content: space-between; align-items: center; margin-top: auto; }
+        .price { font-weight: 700; font-size: 1.1rem; }
+        .add-btn { background: var(--primary-green); color: white; border: none; width: 35px; height: 35px; border-radius: 6px; cursor: pointer; font-weight: bold; }
+
+    </style>
+</head>
+<body>
+
+    <div class="sidebar">
+        <div class="sidebar-logo"><i class="fa-solid fa-paw"></i> Petlor</div>
+        <a href="petownerDashboard.html" class="nav-item"><i class="fa-solid fa-table-columns"></i> Dashboard</a>
+        <a href="mypets.html" class="nav-item"><i class="fa-solid fa-paw"></i> My Pets</a>
+        <a href="vaccination.html" class="nav-item"><i class="fa-solid fa-syringe"></i> Vaccinations</a>
+        <a href="marketplace.html" class="nav-item active"><i class="fa-solid fa-store"></i> Marketplace</a>
+        <a href="checkout.html" class="nav-item"><i class="fa-solid fa-cart-shopping"></i> Cart & Checkout</a>
+        <a href="booking.html" class="nav-item"><i class="fa-solid fa-calendar-check"></i> Book a Service</a>
+        <a href="reportLostPet.html" class="nav-item"><i class="fa-solid fa-bullhorn"></i> Report Lost Pet</a>
+    </div>
+
+    <div class="main-content">
+        <header>
+            <div style="color: #666; font-size: 0.8rem;">Owner Portal / <strong>Welcome back, Sarah 👋</strong></div>
+            <div class="user-profile">
+                <i class="fa-regular fa-bell"></i>
+                <div class="avatar-circle">SJ</div>
+                <div><strong>Sarah Johnson</strong><br><span style="font-size: 0.75rem; color: #999;">owner@petlor.com</span></div>
+                <i class="fa-solid fa-right-from-bracket"></i>
+            </div>
+        </header>
+
+        <div class="content-padding">
+            <div class="market-top">
+                <div>
+                    <h2 style="font-size: 1.8rem; margin-bottom: 5px;">Marketplace</h2>
+                    <p style="color: var(--text-gray);">Allergy-aware shopping tailored to your pets.</p>
+                </div>
+                <button class="view-cart-btn" onclick="window.location.href='checkout.html'">
+                    <i class="fa-solid fa-cart-shopping"></i> View cart
+                </button>
+            </div>
+
+            <div class="search-filter-row">
+                <div class="search-bar">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                    <input type="text" placeholder="Search products or brands...">
+                </div>
+                <div class="filters">
+                    <button class="filter-chip active">All</button>
+                    <button class="filter-chip">Food</button>
+                    <button class="filter-chip">Toys</button>
+                    <button class="filter-chip">Health</button>
+                    <button class="filter-chip">Grooming</button>
+                </div>
+            </div>
+
+            <div class="products-grid">
+                
+                <div class="product-card">
+                    <div class="product-img-box">🥣</div>
+                    <div class="product-info">
+                        <span class="vendor-cat">PETGOLD • FOOD</span>
+                        <h3 class="product-name">Premium Salmon Kibble</h3>
+                        <div class="rating"><i class="fa-solid fa-star"></i> 4.6</div>
+                        <div class="safety-badge unsafe">
+                            <i class="fa-solid fa-circle-exclamation"></i> Contains Fish — not safe for Luna
+                        </div>
+                        <div class="price-row">
+                            <span class="price">$42.99</span>
+                            <button class="add-btn">Add</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="product-card">
+                    <div class="product-img-box">🍖</div>
+                    <div class="product-info">
+                        <span class="vendor-cat">NATUREBOWL • FOOD</span>
+                        <h3 class="product-name">Grain-Free Beef Chunks</h3>
+                        <div class="rating"><i class="fa-solid fa-star"></i> 4.8</div>
+                        <div class="safety-badge safe">
+                            <i class="fa-solid fa-check-circle"></i> Safe for your pets
+                        </div>
+                        <div class="price-row">
+                            <span class="price">$38.50</span>
+                            <button class="add-btn">Add</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="product-card">
+                    <div class="product-img-box">🦴</div>
+                    <div class="product-info">
+                        <span class="vendor-cat">PLAYFUL • TOYS</span>
+                        <h3 class="product-name">Chew Bone Toy</h3>
+                        <div class="rating"><i class="fa-solid fa-star"></i> 4.4</div>
+                        <div class="safety-badge safe">
+                            <i class="fa-solid fa-check-circle"></i> Safe for your pets
+                        </div>
+                        <div class="price-row">
+                            <span class="price">$12.00</span>
+                            <button class="add-btn">Add</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="product-card">
+                    <div class="product-img-box">💊</div>
+                    <div class="product-info">
+                        <span class="vendor-cat">VETCARE • HEALTH</span>
+                        <h3 class="product-name">Joint Support Supplement</h3>
+                        <div class="rating"><i class="fa-solid fa-star"></i> 4.7</div>
+                        <div class="safety-badge safe">
+                            <i class="fa-solid fa-check-circle"></i> Safe for your pets
+                        </div>
+                        <div class="price-row">
+                            <span class="price">$29.99</span>
+                            <button class="add-btn">Add</button>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>
