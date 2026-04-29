@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Petlor - Lab Results</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --primary-green: #589A64;
+            --bg-light: #F8FAF8;
+            --sidebar-width: 240px;
+            --text-dark: #1A1A1A;
+            --text-gray: #666;
+            --border-color: #E0E0E0;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
+        body { background-color: var(--bg-light); display: flex; height: 100vh; overflow: hidden; color: var(--text-dark); }
+
+        /* --- Sidebar --- */
+        .sidebar {
+            width: var(--sidebar-width);
+            background: white;
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            padding: 1.5rem 0;
+            flex-shrink: 0;
+            justify-content: space-between;
+        }
+
+        .sidebar-logo {
+            padding: 0 1.5rem 2rem;
+            font-weight: 700;
+            font-size: 1.2rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .nav-item {
+            padding: 0.8rem 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+            color: var(--text-dark);
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: 0.2s;
+        }
+
+        .nav-item.active {
+            background-color: var(--primary-green);
+            color: white;
+            margin: 0 10px;
+            border-radius: 8px;
+        }
+
+        .nav-item:hover:not(.active) { background: #f0f0f0; }
+
+        .demo-switch { padding: 1.5rem; border-top: 1px solid var(--border-color); }
+        .demo-switch h4 { font-size: 0.65rem; color: #999; margin-bottom: 10px; }
+        .role-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; }
+        .role-btn { padding: 5px; text-align: center; font-size: 0.75rem; border-radius: 20px; color: var(--text-gray); text-decoration: none; }
+        .role-btn.active { background: #DFF0E2; color: var(--primary-green); font-weight: 600; }
+
+        /* --- Main Content --- */
+        .main-content { flex-grow: 1; overflow-y: auto; display: flex; flex-direction: column; }
+
+        header {
+            background: white;
+            padding: 0.8rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .user-profile { display: flex; align-items: center; gap: 15px; font-size: 0.85rem; }
+        .avatar { width: 35px; height: 35px; background: var(--primary-green); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; }
+        .logout-icon { color: var(--text-gray); border: 1px solid var(--border-color); padding: 5px; border-radius: 5px; cursor: pointer; }
+
+        .content-padding { padding: 2rem; }
+        
+        .page-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 2rem; }
+        .page-header h2 { font-size: 1.8rem; margin-bottom: 5px; }
+        .page-header p { color: var(--text-gray); font-size: 0.9rem; }
+
+        .upload-btn {
+            background: var(--primary-green);
+            color: white;
+            border: none;
+            padding: 10px 18px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.85rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* Stats Cards */
+        .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; margin-bottom: 2rem; }
+        .stat-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+        }
+        .stat-info p { font-size: 0.7rem; color: #999; text-transform: uppercase; font-weight: 700; margin-bottom: 5px; }
+        .stat-info h3 { font-size: 1.8rem; font-weight: 700; }
+        .stat-card i { font-size: 1.5rem; }
+        
+        .icon-normal { color: #589A64; }
+        .icon-abnormal { color: #FFB74D; }
+        .icon-critical { color: #E53935; }
+
+        /* Table Card */
+        .table-card {
+            background: white;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.5rem;
+        }
+        
+        table { width: 100%; border-collapse: collapse; }
+        th { text-align: left; color: var(--text-gray); font-size: 0.8rem; font-weight: 600; padding: 12px 10px; border-bottom: 1px solid var(--border-color); }
+        td { padding: 15px 10px; font-size: 0.9rem; border-bottom: 1px solid var(--border-color); vertical-align: middle; }
+        tr:last-child td { border-bottom: none; }
+
+        .pet-cell { display: flex; align-items: center; gap: 10px; font-weight: 500; }
+        
+        .badge {
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            display: inline-block;
+        }
+        .badge-normal { background: #E8F5E9; color: #4CAF50; border: 1px solid #C8E6C9; }
+        .badge-abnormal { background: #FFF3E0; color: #E65100; border: 1px solid #FFE0B2; }
+
+        .view-btn {
+            background: #F5F5F5;
+            border: 1px solid var(--border-color);
+            padding: 6px 15px;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--text-dark);
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .view-btn:hover { background: #eeeeee; }
+
+    </style>
+</head>
+<body>
+
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <div>
+            <div class="sidebar-logo">
+                <i class="fa-solid fa-paw"></i> 
+                <div>Petlor <br></div>
+            </div>
+            <a href="vetDashboard.html" class="nav-item"><i class="fa-solid fa-table-columns"></i> Dashboard</a>
+            <a href="createprescription.html" class="nav-item"><i class="fa-regular fa-file-lines"></i> New Prescription</a>
+            <a href="labresults.html" class="nav-item active"><i class="fa-solid fa-flask"></i> Lab Results</a>
+            <a href="medicalnotes.html" class="nav-item"><i class="fa-regular fa-pen-to-square"></i> Medical Notes</a>
+            <a href="diseasealert.html" class="nav-item"><i class="fa-solid fa-bullhorn"></i> Disease Alerts</a>
+        </div>
+
+
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <header>
+            <div style="color: #666; font-size: 0.8rem;">Vet Portal / <strong>Welcome back, Dr. 👋</strong></div>
+            <div class="user-profile">
+                <i class="fa-regular fa-bell" style="position: relative;"><span style="position: absolute; top: -2px; right: -2px; width: 7px; height: 7px; background: red; border-radius: 50%;"></span></i>
+                <div class="avatar">DM</div>
+                <div><strong>Dr. Mark Lee</strong><br><span style="font-size: 0.75rem; color: #999;">vet@petlor.com</span></div>
+                <i class="fa-solid fa-right-from-bracket logout-icon"></i>
+            </div>
+        </header>
+
+        <div class="content-padding">
+            <div class="page-header">
+                <div>
+                    <h2>Lab Results</h2>
+                    <p>Review and upload laboratory test results.</p>
+                </div>
+                <button class="upload-btn" onclick="window.location.href='uploadresult.html'">
+                    <i class="fa-solid fa-upload"></i> Upload result
+                </button>
+            </div>
+
+            <!-- Stats Grid -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-info">
+                        <p>Normal</p>
+                        <h3>2</h3>
+                    </div>
+                    <i class="fa-solid fa-flask icon-normal"></i>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-info">
+                        <p>Abnormal</p>
+                        <h3>1</h3>
+                    </div>
+                    <i class="fa-solid fa-flask icon-abnormal"></i>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-info">
+                        <p>Critical</p>
+                        <h3>0</h3>
+                    </div>
+                    <i class="fa-solid fa-flask icon-critical"></i>
+                </div>
+            </div>
+
+            <!-- Results Table -->
+            <div class="table-card">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Pet</th>
+                            <th>Test</th>
+                            <th>Date</th>
+                            <th>Result</th>
+                            <th>Status</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><div class="pet-cell">🐕 Max</div></td>
+                            <td>Complete Blood Count</td>
+                            <td>2026-04-10</td>
+                            <td>WBC 8.5 / RBC 6.2 / HGB 14.1</td>
+                            <td><span class="badge badge-normal">Normal</span></td>
+                            <td style="text-align: right;"><button class="view-btn">View</button></td>
+                        </tr>
+                        <tr>
+                            <td><div class="pet-cell">🐕 Max</div></td>
+                            <td>Hip X-Ray</td>
+                            <td>2026-04-10</td>
+                            <td>Mild left hip subluxation</td>
+                            <td><span class="badge badge-abnormal">Abnormal</span></td>
+                            <td style="text-align: right;"><button class="view-btn">View</button></td>
+                        </tr>
+                        <tr>
+                            <td><div class="pet-cell">🐈 Luna</div></td>
+                            <td>Urinalysis</td>
+                            <td>2026-04-15</td>
+                            <td>All values within range</td>
+                            <td><span class="badge badge-normal">Normal</span></td>
+                            <td style="text-align: right;"><button class="view-btn">View</button></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>

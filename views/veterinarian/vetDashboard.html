@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Petlor - Veterinarian Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <style>
+        :root {
+            --primary-green: #589A64;
+            --bg-light: #F8FAF8;
+            --sidebar-width: 240px;
+            --text-dark: #1A1A1A;
+            --text-gray: #666;
+            --border-color: #E0E0E0;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
+        body { background-color: var(--bg-light); display: flex; height: 100vh; overflow: hidden; color: var(--text-dark); }
+
+        /* --- Sidebar --- */
+        .sidebar {
+            width: var(--sidebar-width);
+            background: white;
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            padding: 1.5rem 0;
+            flex-shrink: 0;
+            justify-content: space-between;
+        }
+
+        .sidebar-logo {
+            padding: 0 1.5rem 2rem;
+            font-weight: 700;
+            font-size: 1.2rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .nav-item {
+            padding: 0.8rem 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+            color: var(--text-dark);
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: 0.2s;
+        }
+
+        .nav-item.active {
+            background-color: var(--primary-green);
+            color: white;
+            margin: 0 10px;
+            border-radius: 8px;
+        }
+
+        .nav-item:hover:not(.active) { background: #f0f0f0; }
+
+        .demo-switch { padding: 1.5rem; border-top: 1px solid var(--border-color); }
+        .demo-switch h4 { font-size: 0.65rem; color: #999; margin-bottom: 10px; }
+        .role-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; }
+        .role-btn { padding: 5px; text-align: center; font-size: 0.75rem; border-radius: 20px; color: var(--text-gray); text-decoration: none; }
+        .role-btn.active { background: #DFF0E2; color: var(--primary-green); font-weight: 600; }
+
+        /* --- Main Content --- */
+        .main-content { flex-grow: 1; overflow-y: auto; display: flex; flex-direction: column; }
+
+        header {
+            background: white;
+            padding: 0.8rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .user-profile { display: flex; align-items: center; gap: 15px; font-size: 0.85rem; }
+        .avatar { width: 35px; height: 35px; background: var(--primary-green); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; }
+        .logout-icon { color: var(--text-gray); border: 1px solid var(--border-color); padding: 5px; border-radius: 5px; cursor: pointer; }
+
+        .content-padding { padding: 2rem; }
+        .page-title-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
+        .add-btn { background: var(--primary-green); color: white; border: none; padding: 0.7rem 1.2rem; border-radius: 8px; cursor: pointer; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+
+        /* Stats Cards */
+        .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.5rem; margin-bottom: 2rem; }
+        .stat-card { background: white; padding: 1.5rem; border-radius: 12px; border: 1px solid var(--border-color); display: flex; align-items: center; gap: 15px; }
+        .icon-box { width: 45px; height: 45px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; background: var(--primary-green); color: white; }
+        .stat-info p { font-size: 0.7rem; color: var(--text-gray); text-transform: uppercase; font-weight: 600; }
+        .stat-info h3 { font-size: 1.8rem; }
+        .trend { font-size: 0.75rem; color: var(--primary-green); font-weight: 500; }
+
+        /* Charts Row */
+        .charts-row { display: grid; grid-template-columns: 2fr 1fr; gap: 1.5rem; margin-bottom: 2rem; }
+        .card { background: white; padding: 1.5rem; border-radius: 12px; border: 1px solid var(--border-color); }
+        .card-header { display: flex; justify-content: space-between; margin-bottom: 1.5rem; font-weight: 600; }
+
+        /* Schedule */
+        .schedule-item { display: flex; align-items: center; gap: 12px; padding: 0.8rem; border: 1px solid var(--border-color); border-radius: 8px; margin-bottom: 8px; font-size: 0.85rem; }
+        .time { color: var(--text-gray); width: 45px; font-weight: 500; }
+        .status-dot { width: 18px; height: 18px; border-radius: 50%; border: 1px solid #ddd; position: relative; }
+        .status-dot::after { content: ''; position: absolute; width: 6px; height: 6px; border-radius: 50%; top: 5px; left: 5px; }
+        .dot-blue::after { background: #2196F3; } .dot-blue { background: #E3F2FD; }
+        .dot-green::after { background: #4CAF50; } .dot-green { background: #E8F5E9; }
+        .dot-yellow::after { background: #FFC107; } .dot-yellow { background: #FFF8E1; }
+        .dot-red::after { background: #F44336; } .dot-red { background: #FFEBEE; }
+
+        /* Table */
+        table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
+        th { text-align: left; color: var(--text-gray); font-size: 0.8rem; padding: 10px; border-bottom: 1px solid var(--border-color); }
+        td { padding: 12px 10px; font-size: 0.9rem; border-bottom: 1px solid var(--border-color); }
+        .badge { padding: 4px 10px; border-radius: 15px; font-size: 0.75rem; font-weight: 500; }
+        .badge-normal { background: #E8F5E9; color: #4CAF50; }
+        .badge-abnormal { background: #FFF3E0; color: #E65100; }
+
+    </style>
+</head>
+<body>
+
+    <div class="sidebar">
+        <div>
+            <div class="sidebar-logo">
+                <i class="fa-solid fa-paw"></i> 
+                <div>Petlor <br></div>
+            </div>
+            <a href="vetDashboard.html" class="nav-item active"><i class="fa-solid fa-table-columns"></i> Dashboard</a>
+            <a href="createprescription.html" class="nav-item"><i class="fa-regular fa-file-lines"></i> New Prescription</a>
+            <a href="labresults.html" class="nav-item"><i class="fa-solid fa-flask"></i> Lab Results</a>
+            <a href="medicalnotes.html" class="nav-item"><i class="fa-regular fa-pen-to-square"></i> Medical Notes</a>
+            <a href="diseasealert.html" class="nav-item"><i class="fa-solid fa-bullhorn"></i> Disease Alerts</a>
+        </div>
+
+
+    </div>
+
+    <div class="main-content">
+        <header>
+            <div style="color: #666; font-size: 0.8rem;">Vet Portal / <strong>Welcome back, Dr. 👋</strong></div>
+            <div class="user-profile">
+                <i class="fa-regular fa-bell" style="position: relative;"><span style="position: absolute; top: -2px; right: -2px; width: 7px; height: 7px; background: red; border-radius: 50%;"></span></i>
+                <div class="avatar">DM</div>
+                <div><strong>Dr. Mark Lee</strong><br><span style="font-size: 0.75rem; color: #999;">vet@petlor.com</span></div>
+                <i class="fa-solid fa-right-from-bracket logout-icon"></i>
+            </div>
+        </header>
+
+        <div class="content-padding">
+            <div class="page-title-row">
+                <div>
+                    <h2>Veterinarian Dashboard</h2>
+                    <p style="color: #666; font-size: 0.9rem;">Today's appointments, recent prescriptions and patients.</p>
+                </div>
+                <button class="add-btn" onclick="window.location.href='createprescription.html'">
+                    <i class="fa-solid fa-plus"></i> New prescription
+                </button>
+            </div>
+
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="icon-box"><i class="fa-solid fa-user-group"></i></div>
+                    <div class="stat-info"><p>Appointments Today</p><h3>6</h3><span class="trend">▲ +2 vs yesterday</span></div>
+                </div>
+                <div class="stat-card">
+                    <div class="icon-box"><i class="fa-solid fa-users"></i></div>
+                    <div class="stat-info"><p>Active Patients</p><h3>24</h3><span style="font-size: 0.75rem; color: #999;">This month</span></div>
+                </div>
+                <div class="stat-card">
+                    <div class="icon-box"><i class="fa-regular fa-file-lines"></i></div>
+                    <div class="stat-info"><p>Prescriptions Issued</p><h3>24</h3><span class="trend">▲ +8%</span></div>
+                </div>
+                <div class="stat-card">
+                    <div class="icon-box"><i class="fa-solid fa-flask"></i></div>
+                    <div class="stat-info"><p>Lab Results Pending</p><h3>4</h3><span style="font-size: 0.75rem; color: #999;">Awaiting review</span></div>
+                </div>
+            </div>
+
+            <div class="charts-row">
+                <div class="card">
+                    <div class="card-header">Patients seen (monthly)</div>
+                    <div style="height: 250px;"><canvas id="patientsChart"></canvas></div>
+                </div>
+                <div class="card">
+                    <div class="card-header">Today's schedule</div>
+                    <div class="schedule-item">
+                        <span class="time">09:00</span> <span style="flex:1">Max — Hip recheck</span> <div class="status-dot dot-blue"></div>
+                    </div>
+                    <div class="schedule-item">
+                        <span class="time">10:30</span> <span style="flex:1">Luna — Vaccination</span> <div class="status-dot dot-green"></div>
+                    </div>
+                    <div class="schedule-item">
+                        <span class="time">13:00</span> <span style="flex:1">Bruno — Dental cleaning</span> <div class="status-dot dot-yellow"></div>
+                    </div>
+                    <div class="schedule-item">
+                        <span class="time">15:30</span> <span style="flex:1">Mia — Skin allergy</span> <div class="status-dot dot-red"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">Recent lab results <a href="#" style="color: #1A1A1A; font-size: 0.8rem;">View all</a></div>
+                <table>
+                    <thead>
+                        <tr><th>Pet</th><th>Test</th><th>Date</th><th>Result</th><th>Status</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>🐕 Max</td><td>Complete Blood Count</td><td>2026-04-10</td><td>WBC 8.5 / RBC 6.2 / HGB 14.1</td><td><span class="badge badge-normal">Normal</span></td></tr>
+                        <tr><td>🐕 Max</td><td>Hip X-Ray</td><td>2026-04-10</td><td>Mild left hip subluxation</td><td><span class="badge badge-abnormal">Abnormal</span></td></tr>
+                        <tr><td>🐈 Luna</td><td>Urinalysis</td><td>2026-04-15</td><td>All values within range</td><td><span class="badge badge-normal">Normal</span></td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const ctx = document.getElementById('patientsChart').getContext('2d');
+        
+        let gradient = ctx.createLinearGradient(0, 0, 0, 250);
+        gradient.addColorStop(0, 'rgba(88, 154, 100, 0.2)');   
+        gradient.addColorStop(1, 'rgba(88, 154, 100, 0)');
+
+        const verticalLinePlugin = {
+            id: 'verticalLinePlugin',
+            afterDraw: chart => {
+                if (chart.tooltip?._active?.length) {
+                    let x = chart.tooltip._active[0].element.x;
+                    let y = chart.tooltip._active[0].element.y;
+                    let yAxis = chart.scales.y;
+                    let ctx = chart.ctx;
+                    ctx.save();
+                    ctx.beginPath();
+                    ctx.moveTo(x, y);
+                    ctx.lineTo(x, yAxis.bottom);
+                    ctx.lineWidth = 1;
+                    ctx.strokeStyle = '#D1D5DB';
+                    ctx.stroke();
+                    ctx.restore();
+                }
+            }
+        };
+
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: ['Nov', 'Dec', 'Jan', 'Feb', 'Mar', 'Apr'],
+                datasets: [{
+                    data: [36, 50, 49, 63, 61, 76],
+                    borderColor: '#589A64',
+                    backgroundColor: gradient,
+                    borderWidth: 2,
+                    tension: 0.4,
+                    fill: true,
+                    pointRadius: 0,
+                    pointHoverRadius: 5,
+                    pointBackgroundColor: '#fff',
+                    pointBorderColor: '#589A64',
+                    pointBorderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: '#fff',
+                        titleColor: '#666',
+                        bodyColor: '#589A64',
+                        borderColor: '#eee',
+                        borderWidth: 1,
+                        padding: 10,
+                        displayColors: false,
+                        callbacks: {
+                            label: (context) => `patients : ${context.parsed.y}`
+                        }
+                    }
+                },
+                scales: {
+                    y: { beginAtZero: true, max: 80, ticks: { stepSize: 20 }, grid: { color: '#f5f5f5' }, border: {display: false} },
+                    x: { grid: { display: false } }
+                }
+            },
+            plugins: [verticalLinePlugin]
+        });
+    </script>
+</body>
+</html>

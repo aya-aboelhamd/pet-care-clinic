@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Petlor - Disease Outbreak Alerts</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --primary-green: #589A64;
+            --alert-red: #E53935;
+            --bg-light: #F8FAF8;
+            --sidebar-width: 240px;
+            --text-dark: #1A1A1A;
+            --text-gray: #666;
+            --border-color: #E0E0E0;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
+        body { background-color: var(--bg-light); display: flex; height: 100vh; overflow: hidden; color: var(--text-dark); }
+
+        /* --- Sidebar --- */
+        .sidebar {
+            width: var(--sidebar-width);
+            background: white;
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            padding: 1.5rem 0;
+            flex-shrink: 0;
+            justify-content: space-between;
+        }
+
+        .sidebar-logo {
+            padding: 0 1.5rem 2rem;
+            font-weight: 700;
+            font-size: 1.2rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .nav-item {
+            padding: 0.8rem 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+            color: var(--text-dark);
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: 0.2s;
+        }
+
+        .nav-item.active {
+            background-color: var(--primary-green);
+            color: white;
+            margin: 0 10px;
+            border-radius: 8px;
+        }
+
+        /* --- Main Content --- */
+        .main-content { flex-grow: 1; overflow-y: auto; display: flex; flex-direction: column; }
+
+        header {
+            background: white;
+            padding: 0.8rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .user-profile { display: flex; align-items: center; gap: 15px; font-size: 0.85rem; }
+        .avatar { width: 35px; height: 35px; background: var(--primary-green); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; }
+
+        /* --- Alerts Page Specific --- */
+        .content-padding { padding: 2rem; }
+        .page-header { margin-bottom: 2rem; }
+        .page-title { font-size: 1.8rem; margin-bottom: 5px; }
+        .page-subtitle { color: var(--text-gray); font-size: 0.9rem; }
+
+        .alerts-grid { display: grid; grid-template-columns: 1.5fr 1fr; gap: 1.5rem; align-items: start; }
+        
+        .card { background: white; padding: 1.5rem; border-radius: 12px; border: 1px solid var(--border-color); }
+        .card h3 { font-size: 1rem; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 10px; }
+
+        .form-group { margin-bottom: 1.2rem; }
+        .form-group label { display: block; font-weight: 600; font-size: 0.85rem; margin-bottom: 0.5rem; }
+        
+        input, select, textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 0.9rem;
+            outline: none;
+        }
+
+        .broadcast-btn {
+            background: var(--alert-red);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            width: 100%;
+            margin-top: 1rem;
+            transition: 0.3s;
+        }
+        .broadcast-btn:hover { background: #c62828; }
+
+        /* History List */
+        .history-item {
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            position: relative;
+        }
+        .severity-badge {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            font-size: 0.7rem;
+            padding: 2px 8px;
+            border-radius: 4px;
+            background: #FFEBEE;
+            color: #C62828;
+            font-weight: 700;
+        }
+        .history-item strong { display: block; font-size: 0.9rem; margin-bottom: 4px; }
+        .history-item small { color: var(--text-gray); font-size: 0.75rem; }
+        .history-item p { font-size: 0.8rem; color: #555; margin-top: 8px; line-height: 1.4; }
+
+    </style>
+</head>
+<body>
+
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <div>
+            <div class="sidebar-logo">
+                <i class="fa-solid fa-paw"></i> 
+                <div>Petlor <br></div>
+            </div>
+            <a href="vetDashboard.html" class="nav-item"><i class="fa-solid fa-table-columns"></i> Dashboard</a>
+            <a href="createprescription.html" class="nav-item"><i class="fa-regular fa-file-lines"></i> New Prescription</a>
+            <a href="labresults.html" class="nav-item"><i class="fa-solid fa-flask"></i> Lab Results</a>
+            <a href="medicalnotes.html" class="nav-item"><i class="fa-regular fa-pen-to-square"></i> Medical Notes</a>
+            <a href="diseasealert.html" class="nav-item active"><i class="fa-solid fa-bullhorn"></i> Disease Alerts</a>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <header>
+            <div style="color: #666; font-size: 0.8rem;">Vet Portal / <strong>Disease Control</strong></div>
+            <div class="user-profile">
+                <div class="avatar">DM</div>
+                <div><strong>Dr. Mark Lee</strong><br><span style="font-size: 0.75rem; color: #999;">vet@petlor.com</span></div>
+            </div>
+        </header>
+
+        <div class="content-padding">
+            <div class="page-header">
+                <h2 class="page-title">Disease Outbreak Alerts</h2>
+                <p class="page-subtitle">Notify all registered owners in specific regions about health risks.</p>
+            </div>
+
+            <div class="alerts-grid">
+                <!-- Left: Create Alert -->
+                <div class="card">
+                    <h3><i class="fa-solid fa-circle-exclamation" style="color: var(--alert-red);"></i> Issue New Alert</h3>
+                    
+                    <div class="form-group">
+                        <label>Target Geographic Region</label>
+                        <select>
+                            <option>All Regions</option>
+                            <option>Giza, Egypt</option>
+                            <option>Maadi, Cairo</option>
+                            <option>Zamalek, Cairo</option>
+                        </select>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                        <div class="form-group">
+                            <label>Disease Name</label>
+                            <input type="text" placeholder="e.g. Parvovirus">
+                        </div>
+                        <div class="form-group">
+                            <label>Severity Level</label>
+                            <select>
+                                <option>High (Immediate Action)</option>
+                                <option>Medium (Watchful)</option>
+                                <option>Low (Informational)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Message to Owners</label>
+                        <textarea rows="5" placeholder="Describe the outbreak, symptoms to watch for, and preventive measures..."></textarea>
+                    </div>
+
+                    <button class="broadcast-btn">
+                        <i class="fa-solid fa-tower-broadcast"></i>
+                        Broadcast to 1,240 Users in Region
+                    </button>
+                </div>
+
+                <!-- Right: Alert History -->
+                <div class="card">
+                    <h3>Recent Notifications</h3>
+                    
+                    <div class="history-item">
+                        <span class="severity-badge">HIGH</span>
+                        <strong>Avian Influenza (H5N1)</strong>
+                        <small>Sent to: Maadi Region · 2 days ago</small>
+                        <p>Increase in reported cases. Keep poultry indoors and report any sudden deaths immediately.</p>
+                    </div>
+
+                    <div class="history-item">
+                        <span class="severity-badge" style="background: #FFF3E0; color: #E65100;">MEDIUM</span>
+                        <strong>Feline Panleukopenia</strong>
+                        <small>Sent to: All Regions · 1 week ago</small>
+                        <p>Ensure all kittens are up to date on vaccinations. Outbreak reported in local shelters.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>
