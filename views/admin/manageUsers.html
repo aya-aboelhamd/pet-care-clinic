@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Petlor Admin - User Management</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --primary-green: #589A64;
+            --bg-light: #F8FAF8;
+            --sidebar-width: 240px;
+            --text-dark: #1A1A1A;
+            --text-gray: #666;
+            --border-color: #E0E0E0;
+            --status-active: #E8F5E9;
+            --status-active-text: #4CAF50;
+            --danger-red: #E53935;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
+        body { background-color: var(--bg-light); display: flex; height: 100vh; overflow: hidden; color: var(--text-dark); }
+
+        /* --- Sidebar --- */
+        .sidebar { width: var(--sidebar-width); background: white; border-right: 1px solid var(--border-color); display: flex; flex-direction: column; padding: 1.5rem 0; flex-shrink: 0; justify-content: space-between; }
+        .sidebar-logo { padding: 0 1.5rem 2rem; font-weight: 700; font-size: 1.2rem; display: flex; align-items: center; gap: 10px; }
+        .nav-item { padding: 0.8rem 1.5rem; display: flex; align-items: center; gap: 12px; text-decoration: none; color: var(--text-dark); font-size: 0.9rem; font-weight: 500; transition: 0.2s; }
+        .nav-item.active { background-color: var(--primary-green); color: white; margin: 0 10px; border-radius: 8px; }
+
+        /* --- Main Content --- */
+        .main-content { flex-grow: 1; overflow-y: auto; display: flex; flex-direction: column; }
+        header { background: white; padding: 0.8rem 2rem; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); }
+        .user-profile { display: flex; align-items: center; gap: 15px; font-size: 0.85rem; }
+        .avatar { width: 35px; height: 35px; background: var(--primary-green); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; }
+
+        .content-padding { padding: 2rem; }
+        .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; }
+        .page-header h2 { font-size: 1.8rem; margin-bottom: 5px; }
+        .page-header p { color: var(--text-gray); font-size: 0.9rem; }
+
+        .btn-invite { background: var(--primary-green); color: white; border: none; padding: 10px 20px; border-radius: 8px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 10px; font-size: 0.85rem; }
+
+        /* Search Bar */
+        .search-container { position: relative; margin-bottom: 2rem; }
+        .search-container i { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: #999; }
+        .search-bar { width: 100%; padding: 12px 15px 12px 45px; border: 1px solid var(--border-color); border-radius: 10px; outline: none; font-size: 0.9rem; }
+
+        /* Table Design */
+        .table-card { background: white; border: 1px solid var(--border-color); border-radius: 12px; overflow: hidden; }
+        table { width: 100%; border-collapse: collapse; }
+        th { text-align: left; background: #fff; padding: 15px; font-size: 0.85rem; font-weight: 600; color: var(--text-gray); border-bottom: 1px solid var(--border-color); }
+        td { padding: 15px; font-size: 0.9rem; border-bottom: 1px solid var(--border-color); }
+        
+        /* Role Badges */
+        .badge-role { padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 500; text-transform: lowercase; }
+        .role-owner { background: #E3F2FD; color: #1976D2; }
+        .role-vet { background: #F3E5F5; color: #7B1FA2; }
+        .role-provider { background: #E0F2F1; color: #00796B; }
+        .role-admin { background: #ECEFF1; color: #455A64; }
+
+        /* Status Badge */
+        .status-pill { background: var(--status-active); color: var(--status-active-text); padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 600; }
+
+        /* Action Buttons */
+        .action-cell { display: flex; gap: 10px; }
+        .btn-edit { background: none; border: 1px solid var(--border-color); padding: 5px 15px; border-radius: 6px; cursor: pointer; font-size: 0.8rem; font-weight: 500; }
+        .btn-suspend { background: none; border: 1px solid #FFEBEE; color: var(--danger-red); padding: 5px 15px; border-radius: 6px; cursor: pointer; font-size: 0.8rem; font-weight: 500; }
+        .btn-suspend:hover { background: #FFEBEE; }
+
+    </style>
+</head>
+<body>
+
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <div>
+            <div class="sidebar-logo"><i class="fa-solid fa-paw"></i> Petlor</div>
+            <a href="adminDashboard.html" class="nav-item"><i class="fa-solid fa-table-columns"></i> Dashboard</a>
+            <a href="manageUsers.html" class="nav-item active"><i class="fa-solid fa-users"></i> Users</a>
+            <a href="manageDisputes.html" class="nav-item"><i class="fa-solid fa-shield-halved"></i> Disputes</a>
+            <a href="manageNotifications.html" class="nav-item"><i class="fa-solid fa-bullhorn"></i> Notifications</a>
+            <a href="auditLogs.html" class="nav-item"><i class="fa-solid fa-file-contract"></i> Audit Logs</a>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <header>
+            <div style="color: #666; font-size: 0.8rem;">Admin Portal / <strong>User Management</strong></div>
+            <div class="user-profile">
+                <i class="fa-regular fa-bell"></i>
+                <div class="avatar">A</div>
+                <div><strong>Admin</strong></div>
+            </div>
+        </header>
+
+        <div class="content-padding">
+            <div class="page-header">
+                <div>
+                    <h2>User Management</h2>
+                    <p>View, suspend or promote platform users.</p>
+                </div>
+                
+            </div>
+
+            <div class="search-container">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <input type="text" class="search-bar" placeholder="Search by name, email or role...">
+            </div>
+
+            <div class="table-card">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>Role</th>
+                            <th>Status</th>
+                            <th style="text-align: right; padding-right: 40px;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Sarah Johnson</strong></td>
+                            <td>owner@petlor.com</td>
+                            <td><span class="badge-role role-owner">owner</span></td>
+                            <td><span class="status-pill">Active</span></td>
+                            <td align="right">
+                                <div class="action-cell" style="justify-content: flex-end;">
+                                    <button class="btn-edit">Edit</button>
+                                    <button class="btn-suspend">Suspend</button>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><strong>Dr. Mark Lee</strong></td>
+                            <td>vet@petlor.com</td>
+                            <td><span class="badge-role role-vet">vet</span></td>
+                            <td><span class="status-pill">Active</span></td>
+                            <td align="right">
+                                <div class="action-cell" style="justify-content: flex-end;">
+                                    <button class="btn-edit">Edit</button>
+                                    <button class="btn-suspend">Suspend</button>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><strong>Bella Walks Co.</strong></td>
+                            <td>provider@petlor.com</td>
+                            <td><span class="badge-role role-provider">provider</span></td>
+                            <td><span class="status-pill">Active</span></td>
+                            <td align="right">
+                                <div class="action-cell" style="justify-content: flex-end;">
+                                    <button class="btn-edit">Edit</button>
+                                    <button class="btn-suspend">Suspend</button>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><strong>Admin</strong></td>
+                            <td>admin@petlor.com</td>
+                            <td><span class="badge-role role-admin">admin</span></td>
+                            <td><span class="status-pill">Active</span></td>
+                            <td align="right">
+                                <div class="action-cell" style="justify-content: flex-end;">
+                                    <button class="btn-edit">Edit</button>
+                                    <button class="btn-suspend">Suspend</button>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>
