@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Petlor - QR Check-in</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --primary-green: #589A64;
+            --bg-light: #F8FAF8;
+            --sidebar-width: 240px;
+            --text-dark: #1A1A1A;
+            --text-gray: #666;
+            --border-color: #E0E0E0;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
+        body { background-color: var(--bg-light); display: flex; height: 100vh; overflow: hidden; color: var(--text-dark); }
+
+        /* --- Sidebar (Consistent with previous pages) --- */
+        .sidebar {
+            width: var(--sidebar-width);
+            background: white;
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            padding: 1.5rem 0;
+            flex-shrink: 0;
+            justify-content: space-between;
+        }
+        .sidebar-logo { padding: 0 1.5rem 2rem; font-weight: 700; font-size: 1.2rem; display: flex; align-items: center; gap: 10px; }
+        .nav-item { padding: 0.8rem 1.5rem; display: flex; align-items: center; gap: 12px; text-decoration: none; color: var(--text-dark); font-size: 0.9rem; font-weight: 500; transition: 0.2s; }
+        .nav-item.active { background-color: var(--primary-green); color: white; margin: 0 10px; border-radius: 8px; }
+
+        /* --- Main Content --- */
+        .main-content { flex-grow: 1; overflow-y: auto; display: flex; flex-direction: column; }
+        header { background: white; padding: 0.8rem 2rem; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); }
+        .user-profile { display: flex; align-items: center; gap: 15px; font-size: 0.85rem; }
+        .avatar { width: 35px; height: 35px; background: var(--primary-green); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; }
+
+        .content-padding { padding: 2rem; }
+        .page-header { margin-bottom: 2rem; }
+        .page-header h2 { font-size: 1.8rem; margin-bottom: 5px; }
+        .page-header p { color: var(--text-gray); font-size: 0.9rem; }
+
+        /* QR Section Grid */
+        .qr-grid { display: grid; grid-template-columns: 1.5fr 1fr; gap: 2rem; }
+        
+        .card { background: white; border: 1px solid var(--border-color); border-radius: 12px; padding: 2rem; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 400px; }
+
+        /* Scanner Styling */
+        .qr-scanner-frame {
+            width: 250px;
+            height: 250px;
+            border: 2px dashed #C8E6C9;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 1.5rem;
+            background: #F1F8F1;
+        }
+        .qr-scanner-frame i { font-size: 8rem; color: var(--primary-green); opacity: 0.8; }
+        
+        .scanner-hint { color: var(--text-gray); font-size: 0.85rem; margin-bottom: 1.5rem; }
+
+        .btn-group { display: flex; gap: 10px; }
+        .btn { padding: 10px 24px; border-radius: 8px; font-weight: 600; font-size: 0.9rem; cursor: pointer; transition: 0.2s; border: 1px solid transparent; }
+        .btn-primary { background: var(--primary-green); color: white; }
+        .btn-outline { background: white; border-color: var(--border-color); color: var(--text-dark); }
+
+        /* Activity List */
+        .activity-card { background: white; border: 1px solid var(--border-color); border-radius: 12px; padding: 1.5rem; }
+        .activity-card h4 { margin-bottom: 1.5rem; font-size: 1rem; }
+
+        .activity-item {
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 12px 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+        .activity-info strong { display: block; font-size: 0.9rem; }
+        .activity-info span { font-size: 0.75rem; color: #999; }
+
+        .badge { padding: 4px 12px; border-radius: 20px; font-size: 0.7rem; font-weight: 600; }
+        .badge-checkin { background: #E8F5E9; color: #4CAF50; border: 1px solid #C8E6C9; }
+        .badge-checkout { background: #E3F2FD; color: #2196F3; border: 1px solid #BBDEFB; }
+
+    </style>
+</head>
+<body>
+
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <div>
+            <div class="sidebar-logo">
+                <i class="fa-solid fa-paw"></i> 
+                <div>Petlor <br></div>
+            </div>
+            <a href="providerDashboard.html" class="nav-item"><i class="fa-solid fa-table-columns"></i> Dashboard</a>
+            <a href="bookingRequests.html" class="nav-item"><i class="fa-regular fa-calendar-check"></i> Booking Requests</a>
+            <a href="qrCheckin.html" class="nav-item active"><i class="fa-solid fa-qrcode"></i> QR Check-in</a>
+            <a href="walkTracker.html" class="nav-item"><i class="fa-solid fa-shoe-prints"></i> Walk Tracker</a>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <header>
+            <div style="color: #666; font-size: 0.8rem;">Provider Portal / <strong>Welcome back, Bella 👋</strong></div>
+            <div class="user-profile">
+                <i class="fa-regular fa-bell"></i>
+                <div class="avatar">BW</div>
+                <div><strong>Bella Walks Co.</strong><br><span style="font-size: 0.75rem; color: #999;">provider@petlor.com</span></div>
+            </div>
+        </header>
+
+        <div class="content-padding">
+            <div class="page-header">
+                <h2>QR Check-in / Check-out</h2>
+                <p>Scan the pet's QR code to log a service event.</p>
+            </div>
+
+            <div class="qr-grid">
+                <!-- Scanner Card -->
+                <div class="card">
+                    <div class="qr-scanner-frame">
+                        <i class="fa-solid fa-qrcode"></i>
+                    </div>
+                    <p class="scanner-hint">Position the QR code inside the frame.</p>
+                    <div class="btn-group">
+                        <button class="btn btn-primary">Start scan</button>
+                        <button class="btn btn-outline">Manual entry</button>
+                    </div>
+                </div>
+
+                <!-- Activity Card -->
+                <div class="activity-card">
+                    <h4>Today's activity</h4>
+                    
+                    <div class="activity-item">
+                        <div class="activity-info">
+                            <strong>Max</strong>
+                            <span>08:32</span>
+                        </div>
+                        <span class="badge badge-checkin">Check-in</span>
+                    </div>
+
+                    <div class="activity-item">
+                        <div class="activity-info">
+                            <strong>Luna</strong>
+                            <span>07:50</span>
+                        </div>
+                        <span class="badge badge-checkout">Check-out</span>
+                    </div>
+
+                    <div class="activity-item">
+                        <div class="activity-info">
+                            <strong>Bruno</strong>
+                            <span>07:15</span>
+                        </div>
+                        <span class="badge badge-checkin">Check-in</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>
