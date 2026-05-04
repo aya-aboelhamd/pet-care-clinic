@@ -147,13 +147,13 @@
 
     <div class="sidebar">
         <div class="sidebar-logo"><i class="fa-solid fa-paw"></i> Petlor</div>
-        <a href="petownerDashboard.html" class="nav-item"><i class="fa-solid fa-table-columns"></i> Dashboard</a>
-        <a href="mypets.html" class="nav-item"><i class="fa-solid fa-paw"></i> My Pets</a>
-        <a href="vaccination.html" class="nav-item"><i class="fa-solid fa-syringe"></i> Vaccinations</a>
-        <a href="marketplace.html" class="nav-item active"><i class="fa-solid fa-store"></i> Marketplace</a>
-        <a href="checkout.html" class="nav-item"><i class="fa-solid fa-cart-shopping"></i> Cart & Checkout</a>
-        <a href="booking.html" class="nav-item"><i class="fa-solid fa-calendar-check"></i> Book a Service</a>
-        <a href="reportLostPet.html" class="nav-item"><i class="fa-solid fa-bullhorn"></i> Report Lost Pet</a>
+        <a href="petownerDashboard.php" class="nav-item"><i class="fa-solid fa-table-columns"></i> Dashboard</a>
+        <a href="mypets.php" class="nav-item"><i class="fa-solid fa-paw"></i> My Pets</a>
+        <a href="vaccination.php" class="nav-item"><i class="fa-solid fa-syringe"></i> Vaccinations</a>
+        <a href="marketplace.php" class="nav-item active"><i class="fa-solid fa-store"></i> Marketplace</a>
+        <a href="checkout.php" class="nav-item"><i class="fa-solid fa-cart-shopping"></i> Cart & Checkout</a>
+        <a href="booking.php" class="nav-item"><i class="fa-solid fa-calendar-check"></i> Book a Service</a>
+        <a href="reportLostPet.php" class="nav-item"><i class="fa-solid fa-bullhorn"></i> Report Lost Pet</a>
     </div>
 
     <div class="main-content">
@@ -173,7 +173,7 @@
                     <h2 style="font-size: 1.8rem; margin-bottom: 5px;">Marketplace</h2>
                     <p style="color: var(--text-gray);">Allergy-aware shopping tailored to your pets.</p>
                 </div>
-                <button class="view-cart-btn" onclick="window.location.href='checkout.html'">
+                <button class="view-cart-btn" onclick="window.location.href='checkout.php'">
                     <i class="fa-solid fa-cart-shopping"></i> View cart
                 </button>
             </div>
@@ -264,3 +264,5 @@
 
 </body>
 </html>
+
+

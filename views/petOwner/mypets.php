@@ -187,13 +187,13 @@
 
     <div class="sidebar">
         <div class="sidebar-logo"><i class="fa-solid fa-paw"></i> Petlor</div>
-        <a href="petownerDashboard.html" class="nav-item"><i class="fa-solid fa-table-columns"></i> Dashboard</a>
-        <a href="mypets.html" class="nav-item active"><i class="fa-solid fa-paw"></i> My Pets</a>
-        <a href="vaccination.html" class="nav-item"><i class="fa-solid fa-syringe"></i> Vaccinations</a>
-        <a href="marketplace.html" class="nav-item"><i class="fa-solid fa-store"></i> Marketplace</a>
-        <a href="checkout.html" class="nav-item"><i class="fa-solid fa-cart-shopping"></i> Cart & Checkout</a>
-        <a href="booking.html" class="nav-item"><i class="fa-solid fa-calendar-check"></i> Book a Service</a>
-        <a href="reportLostPet.html" class="nav-item"><i class="fa-solid fa-bullhorn"></i> Report Lost Pet</a>
+        <a href="petownerDashboard.php" class="nav-item"><i class="fa-solid fa-table-columns"></i> Dashboard</a>
+        <a href="mypets.php" class="nav-item active"><i class="fa-solid fa-paw"></i> My Pets</a>
+        <a href="vaccination.php" class="nav-item"><i class="fa-solid fa-syringe"></i> Vaccinations</a>
+        <a href="marketplace.php" class="nav-item"><i class="fa-solid fa-store"></i> Marketplace</a>
+        <a href="checkout.php" class="nav-item"><i class="fa-solid fa-cart-shopping"></i> Cart & Checkout</a>
+        <a href="booking.php" class="nav-item"><i class="fa-solid fa-calendar-check"></i> Book a Service</a>
+        <a href="reportLostPet.php" class="nav-item"><i class="fa-solid fa-bullhorn"></i> Report Lost Pet</a>
     </div>
 
     <div class="main-content">
@@ -216,7 +216,7 @@
                     <h2 style="font-size: 1.8rem; margin-bottom: 5px;">My Pets</h2>
                     <p style="color: var(--text-gray);">Manage profiles, allergies and medical conditions.</p>
                 </div>
-                    <button class="add-new-btn" onclick="window.location.href='addNewPet.html'">
+                    <button class="add-new-btn" onclick="window.location.href='addNewPet.php'">
                         <i class="fa-solid fa-plus"></i> Add new pet
                     </button>
             </div>
@@ -242,7 +242,7 @@
                             <span class="tag tag-allergy">⚠️ Wheat</span>
                             <span class="tag tag-condition">🚫 Mild Hip Dysplasia</span>
                         </div>
-                        <button class="view-profile-btn" onclick="window.location.href='petProfile.html'">
+                        <button class="view-profile-btn" onclick="window.location.href='petProfile.php'">
                             View profile
                         </button>
                     </div>
@@ -275,3 +275,5 @@
 
 </body>
 </html>
+
+

@@ -97,13 +97,13 @@
 
     <div class="sidebar">
         <div class="sidebar-logo"><i class="fa-solid fa-paw"></i> Petlor</div>
-        <a href="petownerDashboard.html" class="nav-item"><i class="fa-solid fa-table-columns"></i> Dashboard</a>
-        <a href="mypets.html" class="nav-item"><i class="fa-solid fa-paw"></i> My Pets</a>
-        <a href="vaccination.html" class="nav-item active"><i class="fa-solid fa-syringe"></i> Vaccinations</a>
-        <a href="marketplace.html" class="nav-item"><i class="fa-solid fa-store"></i> Marketplace</a>
-        <a href="checkout.html" class="nav-item"><i class="fa-solid fa-cart-shopping"></i> Cart & Checkout</a>
-        <a href="booking.html" class="nav-item"><i class="fa-solid fa-calendar-check"></i> Book a Service</a>
-        <a href="reportLostPet.html" class="nav-item"><i class="fa-solid fa-bullhorn"></i> Report Lost Pet</a>
+        <a href="petownerDashboard.php" class="nav-item"><i class="fa-solid fa-table-columns"></i> Dashboard</a>
+        <a href="mypets.php" class="nav-item"><i class="fa-solid fa-paw"></i> My Pets</a>
+        <a href="vaccination.php" class="nav-item active"><i class="fa-solid fa-syringe"></i> Vaccinations</a>
+        <a href="marketplace.php" class="nav-item"><i class="fa-solid fa-store"></i> Marketplace</a>
+        <a href="checkout.php" class="nav-item"><i class="fa-solid fa-cart-shopping"></i> Cart & Checkout</a>
+        <a href="booking.php" class="nav-item"><i class="fa-solid fa-calendar-check"></i> Book a Service</a>
+        <a href="reportLostPet.php" class="nav-item"><i class="fa-solid fa-bullhorn"></i> Report Lost Pet</a>
     </div>
 
     <div class="main-content">
@@ -121,7 +121,7 @@
         </header>
 
         <div class="content-padding">
-            <a href="vaccination.html" class="back-link"><i class="fa-solid fa-arrow-left"></i> Back to Schedule</a>
+            <a href="vaccination.php" class="back-link"><i class="fa-solid fa-arrow-left"></i> Back to Schedule</a>
             
             <h2 style="font-size: 1.8rem; margin-bottom: 1.5rem;">Schedule New Vaccination</h2>
 
@@ -161,7 +161,7 @@
             <div id="result-section">
                 <div class="result-title"><i class="fa-solid fa-circle-check"></i> Schedule Calculated Successfully</div>
                 <div id="calculation-text" style="font-size: 0.9rem; color: #16A34A;"></div>
-                <button class="mark-done-btn" style="margin-top: 15px;" onclick="window.location.href='vaccination.html'">View All Vaccinations</button>
+                <button class="mark-done-btn" style="margin-top: 15px;" onclick="window.location.href='vaccination.php'">View All Vaccinations</button>
             </div>
         </div>
     </div>
@@ -201,3 +201,5 @@
 
 </body>
 </html>
+
+

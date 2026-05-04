@@ -64,13 +64,13 @@
 
     <div class="sidebar">
         <div class="sidebar-logo"><i class="fa-solid fa-paw"></i> Petlor</div>
-         <a href="petownerDashboard.html" class="nav-item"><i class="fa-solid fa-table-columns"></i> Dashboard</a>
-        <a href="mypets.html" class="nav-item"><i class="fa-solid fa-paw"></i> My Pets</a>
-        <a href="vaccination.html" class="nav-item"><i class="fa-solid fa-syringe"></i> Vaccinations</a>
-        <a href="marketplace.html" class="nav-item"><i class="fa-solid fa-store"></i> Marketplace</a>
-        <a href="checkout.html" class="nav-item"><i class="fa-solid fa-cart-shopping"></i> Cart & Checkout</a>
-        <a href="booking.html" class="nav-item"><i class="fa-solid fa-calendar-check"></i> Book a Service</a>
-        <a href="reportLostPet.html" class="nav-item active"><i class="fa-solid fa-bullhorn"></i> Report Lost Pet</a>
+         <a href="petownerDashboard.php" class="nav-item"><i class="fa-solid fa-table-columns"></i> Dashboard</a>
+        <a href="mypets.php" class="nav-item"><i class="fa-solid fa-paw"></i> My Pets</a>
+        <a href="vaccination.php" class="nav-item"><i class="fa-solid fa-syringe"></i> Vaccinations</a>
+        <a href="marketplace.php" class="nav-item"><i class="fa-solid fa-store"></i> Marketplace</a>
+        <a href="checkout.php" class="nav-item"><i class="fa-solid fa-cart-shopping"></i> Cart & Checkout</a>
+        <a href="booking.php" class="nav-item"><i class="fa-solid fa-calendar-check"></i> Book a Service</a>
+        <a href="reportLostPet.php" class="nav-item active"><i class="fa-solid fa-bullhorn"></i> Report Lost Pet</a>
     </div>
 
     <div class="main-content">
@@ -172,3 +172,5 @@
 
 </body>
 </html>
+
+

@@ -173,11 +173,11 @@
                 <i class="fa-solid fa-paw"></i> 
                 <div>Petlor <br></div>
             </div>
-            <a href="vetDashboard.html" class="nav-item"><i class="fa-solid fa-table-columns"></i> Dashboard</a>
-            <a href="createprescription.html" class="nav-item"><i class="fa-regular fa-file-lines"></i> New Prescription</a>
-            <a href="labresults.html" class="nav-item active"><i class="fa-solid fa-flask"></i> Lab Results</a>
-            <a href="medicalnotes.html" class="nav-item"><i class="fa-regular fa-pen-to-square"></i> Medical Notes</a>
-            <a href="diseasealert.html" class="nav-item"><i class="fa-solid fa-bullhorn"></i> Disease Alerts</a>
+            <a href="vetDashboard.php" class="nav-item"><i class="fa-solid fa-table-columns"></i> Dashboard</a>
+            <a href="createprescription.php" class="nav-item"><i class="fa-regular fa-file-lines"></i> New Prescription</a>
+            <a href="labresults.php" class="nav-item active"><i class="fa-solid fa-flask"></i> Lab Results</a>
+            <a href="medicalnotes.php" class="nav-item"><i class="fa-regular fa-pen-to-square"></i> Medical Notes</a>
+            <a href="diseasealert.php" class="nav-item"><i class="fa-solid fa-bullhorn"></i> Disease Alerts</a>
         </div>
 
 
@@ -201,7 +201,7 @@
                     <h2>Lab Results</h2>
                     <p>Review and upload laboratory test results.</p>
                 </div>
-                <button class="upload-btn" onclick="window.location.href='uploadresult.html'">
+                <button class="upload-btn" onclick="window.location.href='uploadresult.php'">
                     <i class="fa-solid fa-upload"></i> Upload result
                 </button>
             </div>
@@ -277,3 +277,5 @@
 
 </body>
 </html>
+
+

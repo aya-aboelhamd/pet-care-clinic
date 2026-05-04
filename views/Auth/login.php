@@ -269,23 +269,23 @@
                 <h2>Sign in</h2>
                 <p class="subtitle">Enter your credentials to access your dashboard.</p>
 
-                <form action="#" method="POST">
-                    <div class="input-group">
-                        <label>Email</label>
-                        <input type="email" placeholder="owner@petlor.com" required>
-                    </div>
-
-                    <div class="input-group">
-                        <label>Password</label>
-                        <input type="password" placeholder="••••" required>
-                    </div>
-
-                    <button type="submit" class="submit-btn">Sign in</button>
-                </form>
-
+            <!-- لازم الـ action يشاور على مسار الـ AuthController والـ method تكون POST -->
+<!-- تم إضافة مسار الـ Controller بشكل صحيح -->
+            <form action="../../controllers/AuthController.php" method="POST">
+                <div class="input-group">
+                    <input type="email" name="email" placeholder="Email" required>
+                </div>
+                <div class="input-group">
+                    <input type="password" name="password" placeholder="Password" required>
+                </div>
+                
+                <!-- تم إضافة كلاس submit-btn عشان الزرار ياخد شكل الستايل بتاعك -->
+                <button class="submit-btn" type="submit" name="login">Login</button>
+            </form>
 
                 <div class="login-link">
-                    New here? <a href="register.html">Create an account</a>
+                    <!-- تم تعديل الامتداد لـ.php -->
+                    New here? <a href="register.php">Create an account</a>
                 </div>
             </div>
         </div>
@@ -293,3 +293,5 @@
 
 </body>
 </html>
+
+

@@ -136,10 +136,10 @@
                 <i class="fa-solid fa-paw"></i> 
                 <div>Petlor <br></div>
             </div>
-            <a href="providerDashboard.html" class="nav-item"><i class="fa-solid fa-table-columns"></i> Dashboard</a>
-            <a href="bookingRequests.html" class="nav-item active"><i class="fa-regular fa-calendar-check"></i> Booking Requests</a>
-            <a href="qrCheckin.html" class="nav-item"><i class="fa-solid fa-qrcode"></i> QR Check-in</a>
-            <a href="walkTracker.html" class="nav-item"><i class="fa-solid fa-shoe-prints"></i> Walk Tracker</a>
+            <a href="providerDashboard.php" class="nav-item"><i class="fa-solid fa-table-columns"></i> Dashboard</a>
+            <a href="bookingRequests.php" class="nav-item active"><i class="fa-regular fa-calendar-check"></i> Booking Requests</a>
+            <a href="qrCheckin.php" class="nav-item"><i class="fa-solid fa-qrcode"></i> QR Check-in</a>
+            <a href="walkTracker.php" class="nav-item"><i class="fa-solid fa-shoe-prints"></i> Walk Tracker</a>
         </div>
     </div>
 
@@ -220,3 +220,5 @@
 
 </body>
 </html>
+
+

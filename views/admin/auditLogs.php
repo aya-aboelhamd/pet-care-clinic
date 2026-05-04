@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Petlor Admin - Disputes</title>
+    <title>Petlor Admin - Audit Logs</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
@@ -37,27 +37,19 @@
         .page-header h2 { font-size: 2rem; font-weight: 700; margin-bottom: 5px; }
         .page-header p { color: var(--text-gray); font-size: 0.95rem; }
 
-        /* Table Design based on image_974e5c.png */
+        /* Search/Filter Bar */
+        .filter-container { position: relative; margin-bottom: 2rem; }
+        .filter-container i { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: #999; }
+        .filter-input { width: 100%; padding: 12px 15px 12px 45px; border: 1px solid var(--border-color); border-radius: 10px; outline: none; font-size: 0.9rem; background: white; }
+
+        /* Audit Table Design based on image_96f85a.png */
         .table-card { background: white; border: 1px solid var(--border-color); border-radius: 12px; overflow: hidden; }
         table { width: 100%; border-collapse: collapse; }
-        th { text-align: left; background: #fff; padding: 18px 15px; font-size: 0.85rem; font-weight: 500; color: var(--text-gray); border-bottom: 1px solid var(--border-color); }
-        td { padding: 18px 15px; font-size: 0.9rem; border-bottom: 1px solid var(--border-color); vertical-align: middle; }
+        th { text-align: left; background: #fff; padding: 15px; font-size: 0.85rem; font-weight: 600; color: var(--text-gray); border-bottom: 1px solid var(--border-color); }
+        td { padding: 15px; font-size: 0.9rem; border-bottom: 1px solid var(--border-color); color: #333; }
         
-        /* Status & Priority Pills */
-        .pill { padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 600; display: inline-block; }
-        
-        /* Priorities */
-        .p-medium { background: #FEF3C7; color: #D97706; border: 1px solid #FDE68A; }
-        .p-high { background: #FEE2E2; color: #DC2626; border: 1px solid #FECACA; }
-        .p-low { background: #F3F4F6; color: #4B5563; border: 1px solid #E5E7EB; }
-
-        /* Statuses */
-        .s-open { background: #FFEDD5; color: #EA580C; }
-        .s-investigating { background: #E0F2FE; color: #0284C7; }
-        .s-resolved { background: #ECFDF5; color: #059669; }
-
-        .btn-action { background: white; border: 1px solid var(--border-color); padding: 6px 16px; border-radius: 8px; cursor: pointer; font-size: 0.85rem; font-weight: 500; transition: 0.2s; }
-        .btn-action:hover { background: #f9f9f9; }
+        .monospace { font-family: 'Courier New', Courier, monospace; color: #666; font-size: 0.85rem; }
+        .action-text { font-weight: 600; }
 
     </style>
 </head>
@@ -67,18 +59,18 @@
     <div class="sidebar">
         <div>
             <div class="sidebar-logo"><i class="fa-solid fa-paw"></i> Petlor</div>
-            <a href="adminDashboard.html" class="nav-item"><i class="fa-solid fa-table-columns"></i> Dashboard</a>
-            <a href="manageUsers.html" class="nav-item"><i class="fa-solid fa-users"></i> Users</a>
-            <a href="manageDisputes.html" class="nav-item active"><i class="fa-solid fa-shield-halved"></i> Disputes</a>
-            <a href="manageNotifications.html" class="nav-item"><i class="fa-solid fa-bullhorn"></i> Notifications</a>
-            <a href="auditLogs.html" class="nav-item"><i class="fa-solid fa-file-contract"></i> Audit Logs</a>
+            <a href="adminDashboard.php" class="nav-item"><i class="fa-solid fa-table-columns"></i> Dashboard</a>
+            <a href="manageUsers.php" class="nav-item"><i class="fa-solid fa-users"></i> Users</a>
+            <a href="manageDisputes.php" class="nav-item"><i class="fa-solid fa-shield-halved"></i> Disputes</a>
+            <a href="manageNotifications.php" class="nav-item"><i class="fa-solid fa-bullhorn"></i> Notifications</a>
+            <a href="auditLogs.php" class="nav-item active"><i class="fa-solid fa-file-contract"></i> Audit Logs</a>
         </div>
     </div>
 
     <!-- Main Content -->
     <div class="main-content">
         <header>
-            <div style="color: #666; font-size: 0.8rem;">Admin Portal / <strong>Welcome back, Admin 👋</strong></div>
+            <div style="color: #666; font-size: 0.8rem;">Admin Portal / <strong>Audit Logs</strong></div>
             <div class="user-profile">
                 <i class="fa-regular fa-bell"></i>
                 <div class="avatar">A</div>
@@ -88,46 +80,48 @@
 
         <div class="content-padding">
             <div class="page-header">
-                <h2>Disputes</h2>
-                <p>Review and resolve user-reported issues.</p>
+                <h2>Audit Logs</h2>
+                <p>Tamper-evident record of platform activity.</p>
+            </div>
+
+            <!-- Filter Bar as seen in image_96f85a.png -->
+            <div class="filter-container">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <input type="text" class="filter-input" placeholder="Filter by actor, action or target...">
             </div>
 
             <div class="table-card">
                 <table>
                     <thead>
                         <tr>
-                            <th>User</th>
-                            <th>Subject</th>
-                            <th>Date</th>
-                            <th>Priority</th>
-                            <th>Status</th>
-                            <th style="text-align: right;">Action</th>
+                            <th>Timestamp</th>
+                            <th>Actor</th>
+                            <th>Action</th>
+                            <th>Target</th>
+                            <th>IP</th>
                         </tr>
                     </thead>
                     <tbody>
                         <tr>
-                            <td>Sarah Johnson</td>
-                            <td>Refund for cancelled grooming</td>
-                            <td>2026-04-20</td>
-                            <td><span class="pill p-medium">Medium</span></td>
-                            <td><span class="pill s-open">Open</span></td>
-                            <td align="right"><button class="btn-action">Open</button></td>
+                            <td class="monospace">2026-04-25 14:22</td>
+                            <td>admin@petlor.com</td>
+                            <td class="action-text">Suspended user</td>
+                            <td>user@example.com</td>
+                            <td class="monospace">10.0.0.4</td>
                         </tr>
                         <tr>
-                            <td>Tom Hardy</td>
-                            <td>Provider no-show</td>
-                            <td>2026-04-18</td>
-                            <td><span class="pill p-high">High</span></td>
-                            <td><span class="pill s-investigating">Investigating</span></td>
-                            <td align="right"><button class="btn-action">Open</button></td>
+                            <td class="monospace">2026-04-12 09:10</td>
+                            <td>vet@petlor.com</td>
+                            <td class="action-text">Created prescription</td>
+                            <td>Pet #p1</td>
+                            <td class="monospace">10.0.0.7</td>
                         </tr>
                         <tr>
-                            <td>Jane Doe</td>
-                            <td>Wrong product shipped</td>
-                            <td>2026-04-10</td>
-                            <td><span class="pill p-low">Low</span></td>
-                            <td><span class="pill s-resolved">Resolved</span></td>
-                            <td align="right"><button class="btn-action">Open</button></td>
+                            <td class="monospace">2026-04-11 16:48</td>
+                            <td>owner@petlor.com</td>
+                            <td class="action-text">Booked service</td>
+                            <td>Booking #b1</td>
+                            <td class="monospace">10.0.0.2</td>
                         </tr>
                     </tbody>
                 </table>
@@ -137,3 +131,4 @@
 
 </body>
 </html>
+

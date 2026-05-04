@@ -130,11 +130,11 @@
                 <i class="fa-solid fa-paw"></i> 
                 <div>Petlor <br></div>
             </div>
-            <a href="vetDashboard.html" class="nav-item active"><i class="fa-solid fa-table-columns"></i> Dashboard</a>
-            <a href="createprescription.html" class="nav-item"><i class="fa-regular fa-file-lines"></i> New Prescription</a>
-            <a href="labresults.html" class="nav-item"><i class="fa-solid fa-flask"></i> Lab Results</a>
-            <a href="medicalnotes.html" class="nav-item"><i class="fa-regular fa-pen-to-square"></i> Medical Notes</a>
-            <a href="diseasealert.html" class="nav-item"><i class="fa-solid fa-bullhorn"></i> Disease Alerts</a>
+            <a href="vetDashboard.php" class="nav-item active"><i class="fa-solid fa-table-columns"></i> Dashboard</a>
+            <a href="createprescription.php" class="nav-item"><i class="fa-regular fa-file-lines"></i> New Prescription</a>
+            <a href="labresults.php" class="nav-item"><i class="fa-solid fa-flask"></i> Lab Results</a>
+            <a href="medicalnotes.php" class="nav-item"><i class="fa-regular fa-pen-to-square"></i> Medical Notes</a>
+            <a href="diseasealert.php" class="nav-item"><i class="fa-solid fa-bullhorn"></i> Disease Alerts</a>
         </div>
 
 
@@ -157,7 +157,7 @@
                     <h2>Veterinarian Dashboard</h2>
                     <p style="color: #666; font-size: 0.9rem;">Today's appointments, recent prescriptions and patients.</p>
                 </div>
-                <button class="add-btn" onclick="window.location.href='createprescription.html'">
+                <button class="add-btn" onclick="window.location.href='createprescription.php'">
                     <i class="fa-solid fa-plus"></i> New prescription
                 </button>
             </div>
@@ -292,3 +292,5 @@
     </script>
 </body>
 </html>
+
+

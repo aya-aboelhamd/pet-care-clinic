@@ -21,14 +21,12 @@
             display: flex;
         }
 
-        /* حاوية الصفحة الرئيسية */
         .container {
             display: flex;
             width: 100%;
             height: 100vh;
         }
 
-        /* الجانب الأيسر - الأخضر */
         .left-panel {
             background-color: #589A64;
             width: 50%;
@@ -79,7 +77,6 @@
             color: rgba(255, 255, 255, 0.8);
         }
 
-        /* الجانب الأيمن - الأبيض */
         .right-panel {
             background-color: #F8FAF8;
             width: 50%;
@@ -109,21 +106,11 @@
             margin-bottom: 2rem;
         }
 
-        .input-group {
-            margin-bottom: 1.2rem;
-        }
-
-        .input-group label {
-            display: block;
-            font-size: 0.85rem;
-            font-weight: 600;
-            color: #333;
-            margin-bottom: 0.5rem;
-        }
-
-        .input-group input[type="text"],
-        .input-group input[type="email"],
-        .input-group input[type="password"] {
+        input[type="text"],
+        input[type="email"],
+        input[type="password"],
+        input[type="tel"],
+        select {
             width: 100%;
             padding: 0.75rem 1rem;
             border: 1px solid #E0E0E0;
@@ -131,50 +118,11 @@
             font-size: 0.95rem;
             outline: none;
             transition: border-color 0.2s;
+            margin-bottom: 1.2rem;
         }
 
-        .input-group input:focus {
+        input:focus, select:focus {
             border-color: #589A64;
-        }
-
-        .radio-section-label {
-            display: block;
-            font-size: 0.85rem;
-            font-weight: 600;
-            color: #333;
-            margin-bottom: 0.5rem;
-            margin-top: 1.5rem;
-        }
-
-        .radio-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-            margin-bottom: 2rem;
-        }
-
-        .radio-box {
-            display: flex;
-            align-items: center;
-            padding: 0.7rem 1rem;
-            border: 1px solid #E0E0E0;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.2s;
-            font-size: 0.9rem;
-            color: #333;
-        }
-
-        /* تغيير لون الإطار عند اختيار الراديو */
-        .radio-box:has(input[type="radio"]:checked) {
-            border-color: #589A64;
-        }
-
-        .radio-box input[type="radio"] {
-            margin-right: 10px;
-            accent-color: #589A64;
-            width: 16px;
-            height: 16px;
         }
 
         .submit-btn {
@@ -189,12 +137,14 @@
             cursor: pointer;
             transition: background-color 0.2s;
             margin-bottom: 1.5rem;
+            margin-top: 0.5rem;
         }
 
         .submit-btn:hover {
             background-color: #45a049;
         }
 
+        /* --- تم إضافة تنسيق اللينك هنا --- */
         .login-link {
             text-align: center;
             font-size: 0.9rem;
@@ -210,8 +160,8 @@
         .login-link a:hover {
             text-decoration: underline;
         }
+        /* ---------------------------------- */
 
-        /* لجعل التصميم متجاوباً مع الشاشات الصغيرة */
         @media (max-width: 900px) {
             .container {
                 flex-direction: column;
@@ -258,51 +208,32 @@
                 <h2>Create your account</h2>
                 <p class="subtitle">It only takes a minute.</p>
 
-                <form action="#" method="POST">
-                    <div class="input-group">
-                        <label>Full name</label>
-                        <input type="text" required>
-                    </div>
+            <form action="../../controllers/AuthController.php" method="POST">
+                <input type="text" name="username" placeholder="Username" required>
+                <input type="email" name="email" placeholder="Email" required>
+                <input type="tel" name="phone" placeholder="Phone Number" required>
+                <input type="password" name="password" placeholder="Password" required>
+                
+                <select name="roleid" required>
+                    <option value="" disabled selected>Select your role...</option>
+                    <option value="2">Pet Owner</option>
+                    <option value="3">Veterinarian</option>
+                    <option value="4">Service Provider</option>
+                </select>
+                
+                <button class="submit-btn" type="submit" name="register">Register</button>
+            </form>
 
-                    <div class="input-group">
-                        <label>Email</label>
-                        <input type="email" required>
-                    </div>
+            <!-- --- تم إضافة اللينك هنا --- -->
+            <div class="login-link">
+                Already have an account? <a href="login.php">Log in</a>
+            </div>
+            <!-- ----------------------------- -->
 
-                    <div class="input-group">
-                        <label>Password</label>
-                        <input type="password" required>
-                    </div>
-
-                    <div class="radio-section-label">I am a</div>
-                    <div class="radio-grid">
-                        <label class="radio-box">
-                            <input type="radio" name="role" value="Pet Owner" checked>
-                            Pet Owner
-                        </label>
-                        <label class="radio-box">
-                            <input type="radio" name="role" value="Veterinarian">
-                            Veterinarian
-                        </label>
-                        <label class="radio-box">
-                            <input type="radio" name="role" value="Service Provider">
-                            Service Provider
-                        </label>
-                        <label class="radio-box">
-                            <input type="radio" name="role" value="Admin">
-                            Admin
-                        </label>
-                    </div>
-
-                    <button type="submit" class="submit-btn">Create account</button>
-
-                    <div class="login-link">
-                        Already have an account? <a href="login.html">Sign in</a>
-                    </div>
-                </form>
             </div>
         </div>
     </div>
 
 </body>
 </html>
+

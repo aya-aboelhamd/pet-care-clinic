@@ -81,11 +81,11 @@
     <div class="sidebar">
         <div>
             <div class="sidebar-logo"><i class="fa-solid fa-paw"></i> Petlor</div>
-            <a href="adminDashboard.html" class="nav-item"><i class="fa-solid fa-table-columns"></i> Dashboard</a>
-            <a href="manageUsers.html" class="nav-item"><i class="fa-solid fa-users"></i> Users</a>
-            <a href="manageDisputes.html" class="nav-item"><i class="fa-solid fa-shield-halved"></i> Disputes</a>
-            <a href="manageNotifications.html" class="nav-item active"><i class="fa-solid fa-bullhorn"></i> Notifications</a>
-            <a href="auditLogs.html" class="nav-item"><i class="fa-solid fa-file-contract"></i> Audit Logs</a>
+            <a href="adminDashboard.php" class="nav-item"><i class="fa-solid fa-table-columns"></i> Dashboard</a>
+            <a href="manageUsers.php" class="nav-item"><i class="fa-solid fa-users"></i> Users</a>
+            <a href="manageDisputes.php" class="nav-item"><i class="fa-solid fa-shield-halved"></i> Disputes</a>
+            <a href="manageNotifications.php" class="nav-item active"><i class="fa-solid fa-bullhorn"></i> Notifications</a>
+            <a href="auditLogs.php" class="nav-item"><i class="fa-solid fa-file-contract"></i> Audit Logs</a>
         </div>
     </div>
 
@@ -177,3 +177,4 @@
 
 </body>
 </html>
+
