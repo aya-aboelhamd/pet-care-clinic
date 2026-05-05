@@ -1,3 +1,87 @@
+<?php
+session_start();
+// التأكد إن اليوزر مسجل دخول وإن الرول بتاعه Pet Owner (رقم 2)
+if (!isset($_SESSION['user_id']) || $_SESSION['role_id'] != 2) {
+    header("Location: ../Auth/login.php");
+    exit();
+}
+
+require_once '../../models/Database.php';
+$database = new Database();
+$db = $database->getConnection();
+
+$user_id = $_SESSION['user_id'];
+
+// 1. جلب بيانات المستخدم الأساسية
+$stmt = $db->prepare("SELECT name, email FROM users WHERE id = ?");
+$stmt->execute([$user_id]);
+$user = $stmt->fetch(PDO::FETCH_ASSOC);
+
+$user_name = $user['name'] ?? 'User';
+$user_email = $user['email'] ?? 'user@petlor.com';
+
+$name_parts = explode(' ', trim($user_name));
+$first_name = $name_parts[0];
+$initials = strtoupper(substr($first_name, 0, 1));
+if (isset($name_parts[1])) {
+    $initials .= strtoupper(substr($name_parts[1], 0, 1));
+} else {
+    $initials .= strtoupper(substr($first_name, 1, 1) ?: '');
+}
+
+// 2. إحصائيات الداشبورد (Stats)
+$stmt = $db->prepare("SELECT COUNT(*) FROM pet WHERE user_id = ? AND (is_archived = 0 OR is_archived IS NULL)");
+$stmt->execute([$user_id]);
+$pets_count = $stmt->fetchColumn();
+
+// التطعيمات المتأخرة
+$stmt = $db->prepare("
+    SELECT COUNT(*) FROM vaccination v 
+    JOIN medicalrecord m ON v.record_id = m.id 
+    JOIN pet p ON m.pet_id = p.id 
+    WHERE p.user_id = ? AND v.next_due_date < CURDATE() AND (p.is_archived = 0 OR p.is_archived IS NULL)
+");
+$stmt->execute([$user_id]);
+$overdue_vaccines = $stmt->fetchColumn();
+
+// الحجوزات القادمة
+$stmt = $db->prepare("SELECT COUNT(*) FROM booking WHERE user_id = ? AND start_time > NOW()");
+$stmt->execute([$user_id]);
+$upcoming_bookings = $stmt->fetchColumn();
+
+// العناصر في العربة
+$stmt = $db->prepare("SELECT COALESCE(SUM(ci.quantity), 0) FROM cartitem ci JOIN cart c ON ci.cart_id = c.id WHERE c.user_id = ?");
+$stmt->execute([$user_id]);
+$cart_items = $stmt->fetchColumn();
+
+// 3. جلب قائمة الحيوانات والإشعارات
+$stmt = $db->prepare("SELECT * FROM pet WHERE user_id = ? AND (is_archived = 0 OR is_archived IS NULL) LIMIT 2");
+$stmt->execute([$user_id]);
+$pets = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+$stmt = $db->prepare("SELECT * FROM notification WHERE user_id = ? ORDER BY created_at DESC LIMIT 2");
+$stmt->execute([$user_id]);
+$notifications = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+// ==========================================
+// 4. تجهيز بيانات الجرافات (Charts Data)
+// ==========================================
+
+// بيانات الوزن (Health Trend)
+$stmt = $db->prepare("
+    SELECT DATE_FORMAT(w.logged_at, '%b %d') as date_label, w.weight 
+    FROM weightlog w 
+    JOIN pet p ON w.pet_id = p.id 
+    WHERE p.user_id = ? 
+    ORDER BY w.logged_at ASC LIMIT 6
+");
+$stmt->execute([$user_id]);
+$weight_records = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+$weight_labels = !empty($weight_records) ? array_column($weight_records, 'date_label') : ['No Data'];
+$weight_values = !empty($weight_records) ? array_column($weight_records, 'weight') : [0];
+
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -21,85 +105,39 @@
         body { background-color: var(--bg-light); display: flex; height: 100vh; overflow: hidden; }
 
         /* --- Sidebar --- */
-        .sidebar {
-            width: var(--sidebar-width);
-            background: white;
-            border-right: 1px solid #E0E0E0;
-            display: flex;
-            flex-direction: column;
-            padding: 1.5rem 0;
-            flex-shrink: 0;
-        }
-
-        .sidebar-logo {
-            padding: 0 1.5rem 2rem;
-            font-weight: 700;
-            font-size: 1.2rem;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .nav-item {
-            padding: 0.8rem 1.5rem;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            text-decoration: none;
-            color: var(--text-gray);
-            font-size: 0.9rem;
-            font-weight: 500;
-            transition: 0.2s;
-        }
-
-        .nav-item.active {
-            background-color: var(--primary-green);
-            color: white;
-            margin: 0 10px;
-            border-radius: 8px;
-        }
-
+        .sidebar { width: var(--sidebar-width); background: white; border-right: 1px solid #E0E0E0; display: flex; flex-direction: column; padding: 1.5rem 0; flex-shrink: 0; }
+        .sidebar-logo { padding: 0 1.5rem 2rem; font-weight: 700; font-size: 1.2rem; display: flex; align-items: center; gap: 10px; }
+        .nav-item { padding: 0.8rem 1.5rem; display: flex; align-items: center; gap: 12px; text-decoration: none; color: var(--text-gray); font-size: 0.9rem; font-weight: 500; transition: 0.2s; }
+        .nav-item.active { background-color: var(--primary-green); color: white; margin: 0 10px; border-radius: 8px; }
         .nav-item:hover:not(.active) { background: #f0f0f0; }
 
         /* --- Main Content --- */
         .main-content { flex-grow: 1; overflow-y: auto; display: flex; flex-direction: column; }
-
-        /* Header */
-        header {
-            background: white;
-            padding: 0.8rem 2rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 1px solid #E0E0E0;
-        }
-
+        header { background: white; padding: 0.8rem 2rem; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #E0E0E0; }
         .user-profile { display: flex; align-items: center; gap: 12px; font-size: 0.85rem; }
-        .avatar { width: 35px; height: 35px; background: #4CAF50; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; }
-
-        /* Dashboard Grid */
+        .avatar { width: 35px; height: 35px; background: #4CAF50; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; text-transform: uppercase;}
+        
         .content-padding { padding: 2rem; }
         .page-title-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
-        .add-pet-btn { background: var(--primary-green); color: white; border: none; padding: 0.6rem 1.2rem; border-radius: 8px; cursor: pointer; font-weight: 600; }
-
-        /* Stats Cards */
+        
         .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.5rem; margin-bottom: 2rem; }
         .stat-card { background: white; padding: 1.5rem; border-radius: 12px; border: 1px solid #E0E0E0; display: flex; align-items: center; gap: 15px; }
         .icon-box { width: 45px; height: 45px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; }
         .stat-info h3 { font-size: 1.5rem; }
         .stat-info p { font-size: 0.75rem; color: var(--text-gray); text-transform: uppercase; letter-spacing: 0.5px; }
 
-        /* Charts Section */
-        .charts-row { display: grid; grid-template-columns: 2fr 1fr; gap: 1.5rem; margin-bottom: 2rem; }
+        /* تم تعديل هذا الجزء ليأخذ العرض بالكامل */
+        .charts-row { display: block; margin-bottom: 2rem; }
         .card { background: white; padding: 1.5rem; border-radius: 12px; border: 1px solid #E0E0E0; }
         .card-header { display: flex; justify-content: space-between; margin-bottom: 1rem; align-items: center; }
 
-        /* Bottom Section */
         .bottom-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
         .pet-item { display: flex; align-items: center; justify-content: space-between; padding: 1rem; border: 1px solid #E0E0E0; border-radius: 10px; margin-bottom: 10px; }
         .notification-item { display: flex; gap: 15px; padding: 1rem; border: 1px solid #E0E0E0; border-radius: 10px; margin-bottom: 10px; font-size: 0.85rem; }
-        .badge { font-size: 0.7rem; padding: 2px 8px; border-radius: 10px; background: #FFF4E5; color: #FF9800; }
-
+        
+        .empty-state { color: #999; font-size: 0.9rem; text-align: center; padding: 1rem; }
+        .logout-btn { color: var(--text-gray); transition: 0.2s; font-size: 1.1rem; }
+        .logout-btn:hover { color: #d32f2f; }
     </style>
 </head>
 <body>
@@ -117,15 +155,15 @@
 
     <div class="main-content">
         <header>
-            <div style="color: #666; font-size: 0.8rem;">Owner Portal / <strong>Welcome back, Sarah 👋</strong></div>
+            <div style="color: #666; font-size: 0.8rem;">Owner Portal / <strong>Welcome back, <?= htmlspecialchars($first_name) ?> 👋</strong></div>
             <div class="user-profile">
                 <i class="fa-regular fa-bell"></i>
-                <div class="avatar">SJ</div>
+                <div class="avatar"><?= htmlspecialchars($initials) ?></div>
                 <div>
-                    <strong>Sarah Johnson</strong><br>
-                    <span style="font-size: 0.75rem; color: #999;">owner@petlor.com</span>
+                    <strong><?= htmlspecialchars($user_name) ?></strong><br>
+                    <span style="font-size: 0.75rem; color: #999;"><?= htmlspecialchars($user_email) ?></span>
                 </div>
-                <i class="fa-solid fa-right-from-bracket"></i>
+                <a href="../Auth/logout.php" class="logout-btn" title="Logout"><i class="fa-solid fa-right-from-bracket"></i></a>
             </div>
         </header>
 
@@ -135,86 +173,92 @@
                     <h2>Dashboard</h2>
                     <p style="color: #666; font-size: 0.9rem;">Quick view of your pets, alerts and upcoming activities.</p>
                 </div>
-
             </div>
 
             <div class="stats-grid">
                 <div class="stat-card">
                     <div class="icon-box" style="background: #E8F5E9; color: #4CAF50;"><i class="fa-solid fa-paw"></i></div>
-                    <div class="stat-info"><p>Pets</p><h3>2</h3></div>
+                    <div class="stat-info"><p>Pets</p><h3><?= $pets_count ?></h3></div>
                 </div>
                 <div class="stat-card">
                     <div class="icon-box" style="background: #E8F5E9; color: #4CAF50;"><i class="fa-solid fa-syringe"></i></div>
-                    <div class="stat-info"><p>Overdue Vaccines</p><h3 style="color: #d32f2f;">1</h3></div>
+                    <div class="stat-info"><p>Overdue Vaccines</p><h3 <?= $overdue_vaccines > 0 ? 'style="color: #d32f2f;"' : '' ?>><?= $overdue_vaccines ?></h3></div>
                 </div>
                 <div class="stat-card">
                     <div class="icon-box" style="background: #E8F5E9; color: #4CAF50;"><i class="fa-solid fa-calendar"></i></div>
-                    <div class="stat-info"><p>Upcoming Bookings</p><h3>3</h3></div>
+                    <div class="stat-info"><p>Upcoming Bookings</p><h3><?= $upcoming_bookings ?></h3></div>
                 </div>
                 <div class="stat-card">
                     <div class="icon-box" style="background: #E8F5E9; color: #4CAF50;"><i class="fa-solid fa-basket-shopping"></i></div>
-                    <div class="stat-info"><p>Cart Items</p><h3>2</h3></div>
+                    <div class="stat-info"><p>Cart Items</p><h3><?= $cart_items ?></h3></div>
                 </div>
             </div>
 
             <div class="charts-row">
                 <div class="card">
                     <div class="card-header">
-                        <strong>Max — Health Trend</strong>
-                        <span class="badge" style="background: #E8F5E9; color: #4CAF50;">Stable</span>
+                        <strong>Health Trend (Weight)</strong>
                     </div>
-                    <canvas id="healthChart" height="100"></canvas>
-                </div>
-                <div class="card">
-                    <strong>Activity (mins/day)</strong>
-                    <canvas id="activityChart" height="200"></canvas>
+                    <canvas id="healthChart" height="80"></canvas>
                 </div>
             </div>
 
             <div class="bottom-row">
                 <div class="card">
                     <h3>Your Pets</h3><br>
-                    <div class="pet-item">
-                        <div style="display: flex; gap: 10px;">
-                            <div class="avatar" style="background: #FFF3E0;">🐶</div>
-                            <div><strong>Max</strong><br><small>Golden Retriever • 4 yrs</small></div>
-                        </div>
-                        <span class="badge">2 allergies</span>
-                    </div>
-                    <div class="pet-item">
-                        <div style="display: flex; gap: 10px;">
-                            <div class="avatar" style="background: #F3E5F5;">🐱</div>
-                            <div><strong>Luna</strong><br><small>British Shorthair • 2 yrs</small></div>
-                        </div>
-                        <span class="badge">1 allergies</span>
-                    </div>
+                    <?php if (count($pets) > 0): ?>
+                        <?php foreach ($pets as $pet): ?>
+                            <div class="pet-item">
+                                <div style="display: flex; gap: 10px;">
+                                    <div class="avatar" style="background: #FFF3E0; color:#333; font-size:1.2rem;">
+                                        <?= strtolower($pet['species']) == 'cat' ? '🐱' : '🐶' ?>
+                                    </div>
+                                    <div>
+                                        <strong><?= htmlspecialchars($pet['name']) ?></strong><br>
+                                        <small><?= htmlspecialchars($pet['breed']) ?> • <?= htmlspecialchars($pet['weight']) ?> kg</small>
+                                    </div>
+                                </div>
+                            </div>
+                        <?php endforeach; ?>
+                    <?php else: ?>
+                        <div class="empty-state">No pets registered yet.</div>
+                    <?php endif; ?>
                 </div>
 
                 <div class="card">
                     <h3>Recent Notifications</h3><br>
-                    <div class="notification-item">
-                        <i class="fa-solid fa-circle-exclamation" style="color: #f44336;"></i>
-                        <div><strong>Vaccination Overdue</strong><br><small>Bordetella for Max is overdue.</small></div>
-                    </div>
-                    <div class="notification-item">
-                        <i class="fa-solid fa-circle-check" style="color: #4CAF50;"></i>
-                        <div><strong>Booking Confirmed</strong><br><small>Walking session on Apr 28 confirmed.</small></div>
-                    </div>
+                    <?php if (count($notifications) > 0): ?>
+                        <?php foreach ($notifications as $notification): ?>
+                            <div class="notification-item">
+                                <i class="fa-solid fa-bell" style="color: #4CAF50;"></i>
+                                <div>
+                                    <strong><?= htmlspecialchars($notification['type']) ?></strong><br>
+                                    <small><?= htmlspecialchars($notification['message']) ?></small>
+                                </div>
+                            </div>
+                        <?php endforeach; ?>
+                    <?php else: ?>
+                        <div class="empty-state">You're all caught up! No recent alerts.</div>
+                    <?php endif; ?>
                 </div>
             </div>
         </div>
     </div>
 
     <script>
-        // الرسم البياني للصحة (Line Chart)
+        // سحب البيانات من الـ PHP للـ JavaScript
+        const weightLabels = <?= json_encode($weight_labels) ?>;
+        const weightData = <?= json_encode($weight_values) ?>;
+
+        // Health Trend Chart
         const ctx1 = document.getElementById('healthChart').getContext('2d');
         new Chart(ctx1, {
             type: 'line',
             data: {
-                labels: ['Nov', 'Dec', 'Jan', 'Feb', 'Mar', 'Apr'],
+                labels: weightLabels,
                 datasets: [{
                     label: 'Weight (kg)',
-                    data: [27.7, 28.1, 28.4, 28.6, 28.5, 28.5],
+                    data: weightData,
                     borderColor: '#589A64',
                     tension: 0.3,
                     fill: false,
@@ -224,23 +268,6 @@
             },
             options: { plugins: { legend: { display: false } } }
         });
-
-        // الرسم البياني للنشاط (Bar Chart)
-        const ctx2 = document.getElementById('activityChart').getContext('2d');
-        new Chart(ctx2, {
-            type: 'bar',
-            data: {
-                labels: ['Nov', 'Dec', 'Jan', 'Feb', 'Mar', 'Apr'],
-                datasets: [{
-                    data: [65, 60, 70, 75, 72, 80],
-                    backgroundColor: '#589A64',
-                    borderRadius: 5
-                }]
-            },
-            options: { plugins: { legend: { display: false } } }
-        });
     </script>
 </body>
 </html>
-
-

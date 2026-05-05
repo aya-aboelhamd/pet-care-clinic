@@ -1,3 +1,51 @@
+<?php
+session_start();
+
+// التأكد إن اليوزر مسجل دخول وإن الرول بتاعه Pet Owner (رقم 2)
+if (!isset($_SESSION['user_id']) || $_SESSION['role_id'] != 2) {
+    header("Location: ../Auth/login.php");
+    exit();
+}
+
+require_once '../../models/Database.php';
+$database = new Database();
+$db = $database->getConnection();
+
+$user_id = $_SESSION['user_id'];
+
+// 1. جلب بيانات المستخدم الأساسية (للهيدر)
+$stmt = $db->prepare("SELECT name, email FROM users WHERE id = ?");
+$stmt->execute([$user_id]);
+$user = $stmt->fetch(PDO::FETCH_ASSOC);
+
+$user_name = $user['name'] ?? 'User';
+$user_email = $user['email'] ?? 'user@petlor.com';
+
+$name_parts = explode(' ', trim($user_name));
+$first_name = $name_parts[0];
+$initials = strtoupper(substr($first_name, 0, 1));
+if (isset($name_parts[1])) {
+    $initials .= strtoupper(substr($name_parts[1], 0, 1));
+} else {
+    $initials .= strtoupper(substr($first_name, 1, 1) ?: '');
+}
+
+// 2. جلب الحيوانات الخاصة باليوزر من جدول pet
+$stmt = $db->prepare("SELECT * FROM pet WHERE user_id = ? AND (is_archived = 0 OR is_archived IS NULL)");
+$stmt->execute([$user_id]);
+$pets = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+// دالة لحساب العمر من تاريخ الميلاد
+function calculateAge($dob) {
+    if (!$dob) return 'Unknown';
+    $bday = new DateTime($dob);
+    $today = new DateTime('today');
+    $diff = $today->diff($bday);
+    if ($diff->y > 0) return $diff->y . ' yrs';
+    if ($diff->m > 0) return $diff->m . ' mos';
+    return $diff->d . ' days';
+}
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -75,7 +123,7 @@
         }
 
         .user-profile { display: flex; align-items: center; gap: 12px; font-size: 0.85rem; }
-        .avatar-circle { width: 35px; height: 35px; background: #4CAF50; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; }
+        .avatar-circle { width: 35px; height: 35px; background: #4CAF50; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; text-transform: uppercase;}
 
         .content-padding { padding: 2rem; }
         
@@ -164,9 +212,6 @@
             font-weight: 600;
         }
 
-        .tag-allergy { background: #FFF4E5; color: #D97706; border: 1px solid #FFEDD5; }
-        .tag-condition { background: #FEF2F2; color: #DC2626; border: 1px solid #FEE2E2; }
-
         .view-profile-btn {
             width: 100%;
             padding: 0.6rem;
@@ -180,7 +225,9 @@
         }
 
         .view-profile-btn:hover { background: #eee; }
-
+        .empty-state { text-align: center; padding: 3rem; color: #666; font-size: 1.1rem; width: 100%; grid-column: 1 / -1; }
+        .logout-btn { color: var(--text-gray); transition: 0.2s; font-size: 1.1rem; }
+        .logout-btn:hover { color: #d32f2f; }
     </style>
 </head>
 <body>
@@ -198,15 +245,16 @@
 
     <div class="main-content">
         <header>
-            <div style="color: #666; font-size: 0.8rem;">Owner Portal / <strong>Welcome back, Sarah 👋</strong></div>
+            <div style="color: #666; font-size: 0.8rem;">Owner Portal / <strong>Welcome back, <?= htmlspecialchars($first_name) ?> 👋</strong></div>
             <div class="user-profile">
                 <i class="fa-regular fa-bell"></i>
-                <div class="avatar-circle">SJ</div>
+                <div class="avatar-circle"><?= htmlspecialchars($initials) ?></div>
                 <div>
-                    <strong>Sarah Johnson</strong><br>
-                    <span style="font-size: 0.75rem; color: #999;">owner@petlor.com</span>
+                    <strong><?= htmlspecialchars($user_name) ?></strong><br>
+                    <span style="font-size: 0.75rem; color: #999;"><?= htmlspecialchars($user_email) ?></span>
                 </div>
-                <i class="fa-solid fa-right-from-bracket"></i>
+                <!-- زرار الخروج -->
+                <a href="../Auth/logout.php" class="logout-btn" title="Logout"><i class="fa-solid fa-right-from-bracket"></i></a>
             </div>
         </header>
 
@@ -216,58 +264,44 @@
                     <h2 style="font-size: 1.8rem; margin-bottom: 5px;">My Pets</h2>
                     <p style="color: var(--text-gray);">Manage profiles, allergies and medical conditions.</p>
                 </div>
-                    <button class="add-new-btn" onclick="window.location.href='addNewPet.php'">
-                        <i class="fa-solid fa-plus"></i> Add new pet
-                    </button>
+                <button class="add-new-btn" onclick="window.location.href='addNewPet.php'">
+                    <i class="fa-solid fa-plus"></i> Add new pet
+                </button>
             </div>
 
             <div class="pets-grid">
                 
-                <div class="pet-card">
-                    <div class="pet-card-header">
-                        <div class="pet-icon-bg">🐶</div>
-                        <div>
-                            <h3 style="font-size: 1.2rem;">Max</h3>
-                            <p style="font-size: 0.85rem; opacity: 0.9;">Golden Retriever</p>
+                <?php if (count($pets) > 0): ?>
+                    <?php foreach ($pets as $pet): ?>
+                        <div class="pet-card">
+                            <div class="pet-card-header">
+                                <div class="pet-icon-bg">
+                                    <!-- تغيير الأيقونة بناءً على الفصيلة -->
+                                    <?= (strtolower($pet['species']) == 'cat' || strtolower($pet['species']) == 'قطه') ? '🐱' : '🐶' ?>
+                                </div>
+                                <div>
+                                    <h3 style="font-size: 1.2rem;"><?= htmlspecialchars($pet['name']) ?></h3>
+                                    <p style="font-size: 0.85rem; opacity: 0.9;"><?= htmlspecialchars($pet['breed']) ?></p>
+                                </div>
+                            </div>
+                            <div class="pet-info-body">
+                                <div class="stats-row">
+                                    <div class="stat-item"><span>Age</span><strong><?= calculateAge($pet['date_of_birth']) ?></strong></div>
+                                    <div class="stat-item"><span>Weight</span><strong><?= htmlspecialchars($pet['weight']) ?> kg</strong></div>
+                                </div>
+                                
+                                <button class="view-profile-btn" onclick="window.location.href='petProfile.php?id=<?= $pet['id'] ?>'">
+                                    View profile
+                                </button>
+                            </div>
                         </div>
+                    <?php endforeach; ?>
+                <?php else: ?>
+                    <div class="empty-state">
+                        <i class="fa-solid fa-paw" style="font-size: 3rem; color: #E0E0E0; margin-bottom: 1rem;"></i><br>
+                        You haven't added any pets yet.
                     </div>
-                    <div class="pet-info-body">
-                        <div class="stats-row">
-                            <div class="stat-item"><span>Age</span><strong>4 yrs</strong></div>
-                            <div class="stat-item"><span>Weight</span><strong>28.5 kg</strong></div>
-                            <div class="stat-item"><span>Gender</span><strong>Male</strong></div>
-                        </div>
-                        <div class="tags-container">
-                            <span class="tag tag-allergy">⚠️ Chicken</span>
-                            <span class="tag tag-allergy">⚠️ Wheat</span>
-                            <span class="tag tag-condition">🚫 Mild Hip Dysplasia</span>
-                        </div>
-                        <button class="view-profile-btn" onclick="window.location.href='petProfile.php'">
-                            View profile
-                        </button>
-                    </div>
-                </div>
-
-                <div class="pet-card">
-                    <div class="pet-card-header">
-                        <div class="pet-icon-bg">🐱</div>
-                        <div>
-                            <h3 style="font-size: 1.2rem;">Luna</h3>
-                            <p style="font-size: 0.85rem; opacity: 0.9;">British Shorthair</p>
-                        </div>
-                    </div>
-                    <div class="pet-info-body">
-                        <div class="stats-row">
-                            <div class="stat-item"><span>Age</span><strong>2 yrs</strong></div>
-                            <div class="stat-item"><span>Weight</span><strong>4.2 kg</strong></div>
-                            <div class="stat-item"><span>Gender</span><strong>Female</strong></div>
-                        </div>
-                        <div class="tags-container">
-                            <span class="tag tag-allergy">⚠️ Fish</span>
-                        </div>
-                        <button class="view-profile-btn">View profile</button>
-                    </div>
-                </div>
+                <?php endif; ?>
 
             </div>
         </div>
@@ -275,5 +309,3 @@
 
 </body>
 </html>
-
-
