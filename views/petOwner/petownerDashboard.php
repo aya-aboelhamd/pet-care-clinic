@@ -1,6 +1,5 @@
 <?php
 session_start();
-// التأكد إن اليوزر مسجل دخول وإن الرول بتاعه Pet Owner (رقم 2)
 if (!isset($_SESSION['user_id']) || $_SESSION['role_id'] != 2) {
     header("Location: ../Auth/login.php");
     exit();
@@ -12,7 +11,6 @@ $db = $database->getConnection();
 
 $user_id = $_SESSION['user_id'];
 
-// 1. جلب بيانات المستخدم الأساسية
 $stmt = $db->prepare("SELECT name, email FROM users WHERE id = ?");
 $stmt->execute([$user_id]);
 $user = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -29,12 +27,10 @@ if (isset($name_parts[1])) {
     $initials .= strtoupper(substr($first_name, 1, 1) ?: '');
 }
 
-// 2. إحصائيات الداشبورد (Stats)
 $stmt = $db->prepare("SELECT COUNT(*) FROM pet WHERE user_id = ? AND (is_archived = 0 OR is_archived IS NULL)");
 $stmt->execute([$user_id]);
 $pets_count = $stmt->fetchColumn();
 
-// التطعيمات المتأخرة
 $stmt = $db->prepare("
     SELECT COUNT(*) FROM vaccination v 
     JOIN medicalrecord m ON v.record_id = m.id 
@@ -44,17 +40,14 @@ $stmt = $db->prepare("
 $stmt->execute([$user_id]);
 $overdue_vaccines = $stmt->fetchColumn();
 
-// الحجوزات القادمة
 $stmt = $db->prepare("SELECT COUNT(*) FROM booking WHERE user_id = ? AND start_time > NOW()");
 $stmt->execute([$user_id]);
 $upcoming_bookings = $stmt->fetchColumn();
 
-// العناصر في العربة
 $stmt = $db->prepare("SELECT COALESCE(SUM(ci.quantity), 0) FROM cartitem ci JOIN cart c ON ci.cart_id = c.id WHERE c.user_id = ?");
 $stmt->execute([$user_id]);
 $cart_items = $stmt->fetchColumn();
 
-// 3. جلب قائمة الحيوانات والإشعارات
 $stmt = $db->prepare("SELECT * FROM pet WHERE user_id = ? AND (is_archived = 0 OR is_archived IS NULL) LIMIT 2");
 $stmt->execute([$user_id]);
 $pets = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -63,11 +56,15 @@ $stmt = $db->prepare("SELECT * FROM notification WHERE user_id = ? ORDER BY crea
 $stmt->execute([$user_id]);
 $notifications = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-// ==========================================
-// 4. تجهيز بيانات الجرافات (Charts Data)
-// ==========================================
+$stmt = $db->prepare("SELECT * FROM notification WHERE user_id = ? ORDER BY created_at DESC LIMIT 10");
+$stmt->execute([$user_id]);
+$dropdown_notifications = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-// بيانات الوزن (Health Trend)
+$unread_count = 0;
+foreach ($dropdown_notifications as $n) {
+    if ($n['is_read'] == 0) $unread_count++;
+}
+
 $stmt = $db->prepare("
     SELECT DATE_FORMAT(w.logged_at, '%b %d') as date_label, w.weight 
     FROM weightlog w 
@@ -80,6 +77,13 @@ $weight_records = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 $weight_labels = !empty($weight_records) ? array_column($weight_records, 'date_label') : ['No Data'];
 $weight_values = !empty($weight_records) ? array_column($weight_records, 'weight') : [0];
+
+if (isset($_GET['mark_read'])) {
+    $stmt = $db->prepare("UPDATE notification SET is_read = 1 WHERE user_id = ?");
+    $stmt->execute([$user_id]);
+    header("Location: petownerDashboard.php");
+    exit();
+}
 
 ?>
 <!DOCTYPE html>
@@ -104,14 +108,12 @@ $weight_values = !empty($weight_records) ? array_column($weight_records, 'weight
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
         body { background-color: var(--bg-light); display: flex; height: 100vh; overflow: hidden; }
 
-        /* --- Sidebar --- */
         .sidebar { width: var(--sidebar-width); background: white; border-right: 1px solid #E0E0E0; display: flex; flex-direction: column; padding: 1.5rem 0; flex-shrink: 0; }
         .sidebar-logo { padding: 0 1.5rem 2rem; font-weight: 700; font-size: 1.2rem; display: flex; align-items: center; gap: 10px; }
         .nav-item { padding: 0.8rem 1.5rem; display: flex; align-items: center; gap: 12px; text-decoration: none; color: var(--text-gray); font-size: 0.9rem; font-weight: 500; transition: 0.2s; }
         .nav-item.active { background-color: var(--primary-green); color: white; margin: 0 10px; border-radius: 8px; }
         .nav-item:hover:not(.active) { background: #f0f0f0; }
 
-        /* --- Main Content --- */
         .main-content { flex-grow: 1; overflow-y: auto; display: flex; flex-direction: column; }
         header { background: white; padding: 0.8rem 2rem; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #E0E0E0; }
         .user-profile { display: flex; align-items: center; gap: 12px; font-size: 0.85rem; }
@@ -126,7 +128,6 @@ $weight_values = !empty($weight_records) ? array_column($weight_records, 'weight
         .stat-info h3 { font-size: 1.5rem; }
         .stat-info p { font-size: 0.75rem; color: var(--text-gray); text-transform: uppercase; letter-spacing: 0.5px; }
 
-        /* تم تعديل هذا الجزء ليأخذ العرض بالكامل */
         .charts-row { display: block; margin-bottom: 2rem; }
         .card { background: white; padding: 1.5rem; border-radius: 12px; border: 1px solid #E0E0E0; }
         .card-header { display: flex; justify-content: space-between; margin-bottom: 1rem; align-items: center; }
@@ -138,6 +139,19 @@ $weight_values = !empty($weight_records) ? array_column($weight_records, 'weight
         .empty-state { color: #999; font-size: 0.9rem; text-align: center; padding: 1rem; }
         .logout-btn { color: var(--text-gray); transition: 0.2s; font-size: 1.1rem; }
         .logout-btn:hover { color: #d32f2f; }
+
+        .bell-wrapper { position: relative; cursor: pointer; display: flex; align-items: center; font-size: 1.1rem; }
+        .notif-badge { position: absolute; top: -5px; right: -5px; background: #DC2626; color: white; font-size: 0.6rem; font-weight: bold; padding: 2px 5px; border-radius: 50%; }
+        .notif-dropdown { display: none; position: absolute; top: 35px; right: 0; width: 320px; background: white; border: 1px solid #E0E0E0; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); z-index: 1000; max-height: 400px; overflow-y: auto; cursor: default;}
+        .notif-dropdown.show { display: block; animation: fadeIn 0.2s ease; }
+        .dropdown-header { padding: 12px 15px; border-bottom: 1px solid #E0E0E0; font-weight: bold; font-size: 0.9rem; display: flex; justify-content: space-between; align-items: center;}
+        .dropdown-header a { font-size: 0.75rem; color: var(--primary-green); text-decoration: none; font-weight: normal; }
+        .dropdown-item { padding: 12px 15px; border-bottom: 1px solid #F5F5F5; font-size: 0.8rem; line-height: 1.4; color: var(--text-dark); }
+        .dropdown-item:last-child { border-bottom: none; }
+        .dropdown-item.unread { background: #F0FDF4; border-left: 3px solid var(--primary-green); }
+        .dropdown-time { font-size: 0.7rem; color: #999; margin-top: 5px; }
+        
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
 <body>
@@ -146,18 +160,48 @@ $weight_values = !empty($weight_records) ? array_column($weight_records, 'weight
         <div class="sidebar-logo"><i class="fa-solid fa-paw"></i> Petlor</div>
         <a href="petownerDashboard.php" class="nav-item active"><i class="fa-solid fa-table-columns"></i> Dashboard</a>
         <a href="mypets.php" class="nav-item"><i class="fa-solid fa-paw"></i> My Pets</a>
+        <a href="healthLogs.php" class="nav-item"><i class="fa-solid fa-syringe"></i> Health Logs</a>
         <a href="vaccination.php" class="nav-item"><i class="fa-solid fa-syringe"></i> Vaccinations</a>
         <a href="marketplace.php" class="nav-item"><i class="fa-solid fa-store"></i> Marketplace</a>
         <a href="checkout.php" class="nav-item"><i class="fa-solid fa-cart-shopping"></i> Cart & Checkout</a>
         <a href="booking.php" class="nav-item"><i class="fa-solid fa-calendar-check"></i> Book a Service</a>
+        <a href="symptomChecker.php" class="nav-item"><i class="fa-solid fa-bullhorn"></i> Symptom Checker</a>
         <a href="reportLostPet.php" class="nav-item"><i class="fa-solid fa-bullhorn"></i> Report Lost Pet</a>
+        
     </div>
 
     <div class="main-content">
         <header>
             <div style="color: #666; font-size: 0.8rem;">Owner Portal / <strong>Welcome back, <?= htmlspecialchars($first_name) ?> 👋</strong></div>
             <div class="user-profile">
-                <i class="fa-regular fa-bell"></i>
+                
+                <div class="bell-wrapper" onclick="toggleNotif(event)">
+                    <i class="fa-regular fa-bell"></i>
+                    <?php if($unread_count > 0): ?>
+                        <span class="notif-badge"><?= $unread_count ?></span>
+                    <?php endif; ?>
+                    
+                    <div class="notif-dropdown" id="notifDropdown" onclick="event.stopPropagation()">
+                        <div class="dropdown-header">
+                            <span>Notifications</span>
+                            <?php if($unread_count > 0): ?>
+                                <a href="?mark_read=1">Mark all as read</a>
+                            <?php endif; ?>
+                        </div>
+                        <?php if(empty($dropdown_notifications)): ?>
+                            <div class="dropdown-item" style="text-align: center; color: #999; padding: 20px;">No new notifications</div>
+                        <?php else: ?>
+                            <?php foreach($dropdown_notifications as $dn): ?>
+                                <div class="dropdown-item <?= $dn['is_read'] == 0 ? 'unread' : '' ?>">
+                                    <strong style="<?= $dn['type'] == 'Recall' ? 'color:#DC2626;' : '' ?>"><?= htmlspecialchars($dn['type']) ?> Alert</strong><br>
+                                    <?= htmlspecialchars($dn['message']) ?>
+                                    <div class="dropdown-time"><?= date('M j, Y g:i A', strtotime($dn['created_at'])) ?></div>
+                                </div>
+                            <?php endforeach; ?>
+                        <?php endif; ?>
+                    </div>
+                </div>
+
                 <div class="avatar"><?= htmlspecialchars($initials) ?></div>
                 <div>
                     <strong><?= htmlspecialchars($user_name) ?></strong><br>
@@ -246,11 +290,9 @@ $weight_values = !empty($weight_records) ? array_column($weight_records, 'weight
     </div>
 
     <script>
-        // سحب البيانات من الـ PHP للـ JavaScript
         const weightLabels = <?= json_encode($weight_labels) ?>;
         const weightData = <?= json_encode($weight_values) ?>;
 
-        // Health Trend Chart
         const ctx1 = document.getElementById('healthChart').getContext('2d');
         new Chart(ctx1, {
             type: 'line',
@@ -268,6 +310,23 @@ $weight_values = !empty($weight_records) ? array_column($weight_records, 'weight
             },
             options: { plugins: { legend: { display: false } } }
         });
+
+        function toggleNotif(event) {
+            event.stopPropagation();
+            document.getElementById('notifDropdown').classList.toggle('show');
+        }
+
+        window.onclick = function(event) {
+            if (!event.target.closest('.bell-wrapper')) {
+                var dropdowns = document.getElementsByClassName("notif-dropdown");
+                for (var i = 0; i < dropdowns.length; i++) {
+                    var openDropdown = dropdowns[i];
+                    if (openDropdown.classList.contains('show')) {
+                        openDropdown.classList.remove('show');
+                    }
+                }
+            }
+        }
     </script>
 </body>
 </html>

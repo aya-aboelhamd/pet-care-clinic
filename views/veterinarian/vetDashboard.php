@@ -1,3 +1,97 @@
+<?php
+session_start();
+if (!isset($_SESSION['user_id']) || $_SESSION['role_id'] != 3) {
+    header("Location: ../Auth/login.php");
+    exit();
+}
+
+require_once '../../models/Database.php';
+$database = new Database();
+$db = $database->getConnection();
+
+$user_id = $_SESSION['user_id'];
+
+$stmt = $db->prepare("SELECT name, email FROM users WHERE id = ?");
+$stmt->execute([$user_id]);
+$user = $stmt->fetch(PDO::FETCH_ASSOC);
+
+$user_name = $user['name'] ?? 'Veterinarian';
+$user_email = $user['email'] ?? 'vet@petlor.com';
+
+$name_parts = explode(' ', trim($user_name));
+$first_name = $name_parts[0];
+$initials = strtoupper(substr($first_name, 0, 1));
+if (isset($name_parts[1])) {
+    $initials .= strtoupper(substr($name_parts[1], 0, 1));
+} else {
+    $initials .= strtoupper(substr($first_name, 1, 1) ?: '');
+}
+
+$stmt = $db->prepare("SELECT * FROM notification WHERE user_id = ? ORDER BY created_at DESC LIMIT 10");
+$stmt->execute([$user_id]);
+$notifications = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+$unread_count = 0;
+foreach ($notifications as $n) {
+    if ($n['is_read'] == 0) $unread_count++;
+}
+
+if (isset($_GET['mark_read'])) {
+    $stmt = $db->prepare("UPDATE notification SET is_read = 1 WHERE user_id = ?");
+    $stmt->execute([$user_id]);
+    header("Location: vetDashboard.php");
+    exit();
+}
+
+$stmt = $db->prepare("SELECT COUNT(*) FROM booking WHERE provider_id = ?");
+$stmt->execute([$user_id]);
+$total_appointments = $stmt->fetchColumn();
+
+$stmt = $db->prepare("SELECT COUNT(DISTINCT user_id) FROM booking WHERE provider_id = ?");
+$stmt->execute([$user_id]);
+$active_clients = $stmt->fetchColumn();
+
+$stmt = $db->prepare("SELECT COUNT(p.id) FROM prescription p JOIN medicalrecord m ON p.record_id = m.id WHERE m.vet_id = ?");
+$stmt->execute([$user_id]);
+$prescriptions_issued = $stmt->fetchColumn();
+
+$stmt = $db->prepare("SELECT COUNT(*) FROM lab_results WHERE vet_id = ?");
+$stmt->execute([$user_id]);
+$lab_results_count = $stmt->fetchColumn();
+
+$stmt = $db->prepare("
+    SELECT b.start_time, b.service_type, b.status, p.name as pet_name, u.name as owner_name 
+    FROM booking b 
+    JOIN pet p ON b.pet_id = p.id 
+    JOIN users u ON b.user_id = u.id
+    WHERE b.provider_id = ? AND (DATE(b.start_time) >= CURDATE() OR b.status = 'Pending')
+    ORDER BY b.start_time ASC LIMIT 5
+");
+$stmt->execute([$user_id]);
+$todays_schedule = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+$stmt = $db->prepare("
+    SELECT l.test_name, l.uploaded_at, l.technical_data, l.is_critical, p.name as pet_name, p.species 
+    FROM lab_results l 
+    JOIN pet p ON l.pet_id = p.id 
+    WHERE l.vet_id = ? 
+    ORDER BY l.uploaded_at DESC LIMIT 4
+");
+$stmt->execute([$user_id]);
+$recent_labs = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+$chart_data = [];
+$chart_labels = [];
+for ($i = 5; $i >= 0; $i--) {
+    $month_num = date('m', strtotime("-$i months"));
+    $year_num = date('Y', strtotime("-$i months"));
+    $month_name = date('M', strtotime("-$i months"));
+    $stmt = $db->prepare("SELECT COUNT(DISTINCT pet_id) FROM medicalrecord WHERE vet_id = ? AND MONTH(created_at) = ? AND YEAR(created_at) = ?");
+    $stmt->execute([$user_id, $month_num, $year_num]);
+    $chart_labels[] = $month_name;
+    $chart_data[] = $stmt->fetchColumn();
+}
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -7,177 +101,114 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    
     <style>
-        :root {
-            --primary-green: #589A64;
-            --bg-light: #F8FAF8;
-            --sidebar-width: 240px;
-            --text-dark: #1A1A1A;
-            --text-gray: #666;
-            --border-color: #E0E0E0;
-        }
-
+        :root { --primary-green: #589A64; --bg-light: #F8FAF8; --sidebar-width: 240px; --text-dark: #1A1A1A; --text-gray: #666; --border-color: #E0E0E0; }
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
         body { background-color: var(--bg-light); display: flex; height: 100vh; overflow: hidden; color: var(--text-dark); }
-
-        /* --- Sidebar --- */
-        .sidebar {
-            width: var(--sidebar-width);
-            background: white;
-            border-right: 1px solid var(--border-color);
-            display: flex;
-            flex-direction: column;
-            padding: 1.5rem 0;
-            flex-shrink: 0;
-            justify-content: space-between;
-        }
-
-        .sidebar-logo {
-            padding: 0 1.5rem 2rem;
-            font-weight: 700;
-            font-size: 1.2rem;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .nav-item {
-            padding: 0.8rem 1.5rem;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            text-decoration: none;
-            color: var(--text-dark);
-            font-size: 0.9rem;
-            font-weight: 500;
-            transition: 0.2s;
-        }
-
-        .nav-item.active {
-            background-color: var(--primary-green);
-            color: white;
-            margin: 0 10px;
-            border-radius: 8px;
-        }
-
-        .nav-item:hover:not(.active) { background: #f0f0f0; }
-
-        .demo-switch { padding: 1.5rem; border-top: 1px solid var(--border-color); }
-        .demo-switch h4 { font-size: 0.65rem; color: #999; margin-bottom: 10px; }
-        .role-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; }
-        .role-btn { padding: 5px; text-align: center; font-size: 0.75rem; border-radius: 20px; color: var(--text-gray); text-decoration: none; }
-        .role-btn.active { background: #DFF0E2; color: var(--primary-green); font-weight: 600; }
-
-        /* --- Main Content --- */
+        .sidebar { width: var(--sidebar-width); background: white; border-right: 1px solid var(--border-color); display: flex; flex-direction: column; padding: 1.5rem 0; flex-shrink: 0; justify-content: space-between; }
+        .sidebar-logo { padding: 0 1.5rem 2rem; font-weight: 700; font-size: 1.2rem; display: flex; align-items: center; gap: 10px; }
+        .nav-item { padding: 0.8rem 1.5rem; display: flex; align-items: center; gap: 12px; text-decoration: none; color: var(--text-dark); font-size: 0.9rem; font-weight: 500; transition: 0.2s; }
+        .nav-item.active { background-color: var(--primary-green); color: white; margin: 0 10px; border-radius: 8px; }
         .main-content { flex-grow: 1; overflow-y: auto; display: flex; flex-direction: column; }
-
-        header {
-            background: white;
-            padding: 0.8rem 2rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 1px solid var(--border-color);
-        }
-
+        header { background: white; padding: 0.8rem 2rem; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); }
         .user-profile { display: flex; align-items: center; gap: 15px; font-size: 0.85rem; }
         .avatar { width: 35px; height: 35px; background: var(--primary-green); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; }
-        .logout-icon { color: var(--text-gray); border: 1px solid var(--border-color); padding: 5px; border-radius: 5px; cursor: pointer; }
-
+        .logout-icon { color: var(--text-gray); border: 1px solid var(--border-color); padding: 5px; border-radius: 5px; cursor: pointer; text-decoration: none; transition: 0.2s;}
+        .logout-icon:hover { background-color: #f0f0f0; color: #DC2626; border-color: #DC2626;}
+        .bell-wrapper { position: relative; cursor: pointer; display: flex; align-items: center; font-size: 1.1rem; }
+        .notif-badge { position: absolute; top: -5px; right: -5px; background: #DC2626; color: white; font-size: 0.6rem; font-weight: bold; padding: 2px 5px; border-radius: 50%; }
+        .notif-dropdown { display: none; position: absolute; top: 35px; right: 0; width: 320px; background: white; border: 1px solid #E0E0E0; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); z-index: 1000; max-height: 400px; overflow-y: auto; cursor: default;}
+        .notif-dropdown.show { display: block; animation: fadeIn 0.2s ease; }
+        .dropdown-header { padding: 12px 15px; border-bottom: 1px solid #E0E0E0; font-weight: bold; font-size: 0.9rem; display: flex; justify-content: space-between; align-items: center;}
+        .dropdown-header a { font-size: 0.75rem; color: var(--primary-green); text-decoration: none; font-weight: normal; }
+        .dropdown-item { padding: 12px 15px; border-bottom: 1px solid #F5F5F5; font-size: 0.8rem; line-height: 1.4; color: var(--text-dark); }
+        .dropdown-item.unread { background: #F0FDF4; border-left: 3px solid var(--primary-green); }
+        .dropdown-time { font-size: 0.7rem; color: #999; margin-top: 5px; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
         .content-padding { padding: 2rem; }
-        .page-title-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
-        .add-btn { background: var(--primary-green); color: white; border: none; padding: 0.7rem 1.2rem; border-radius: 8px; cursor: pointer; font-weight: 600; display: flex; align-items: center; gap: 8px; }
-
-        /* Stats Cards */
         .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.5rem; margin-bottom: 2rem; }
         .stat-card { background: white; padding: 1.5rem; border-radius: 12px; border: 1px solid var(--border-color); display: flex; align-items: center; gap: 15px; }
         .icon-box { width: 45px; height: 45px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; background: var(--primary-green); color: white; }
         .stat-info p { font-size: 0.7rem; color: var(--text-gray); text-transform: uppercase; font-weight: 600; }
         .stat-info h3 { font-size: 1.8rem; }
-        .trend { font-size: 0.75rem; color: var(--primary-green); font-weight: 500; }
-
-        /* Charts Row */
         .charts-row { display: grid; grid-template-columns: 2fr 1fr; gap: 1.5rem; margin-bottom: 2rem; }
         .card { background: white; padding: 1.5rem; border-radius: 12px; border: 1px solid var(--border-color); }
         .card-header { display: flex; justify-content: space-between; margin-bottom: 1.5rem; font-weight: 600; }
-
-        /* Schedule */
         .schedule-item { display: flex; align-items: center; gap: 12px; padding: 0.8rem; border: 1px solid var(--border-color); border-radius: 8px; margin-bottom: 8px; font-size: 0.85rem; }
         .time { color: var(--text-gray); width: 45px; font-weight: 500; }
         .status-dot { width: 18px; height: 18px; border-radius: 50%; border: 1px solid #ddd; position: relative; }
-        .status-dot::after { content: ''; position: absolute; width: 6px; height: 6px; border-radius: 50%; top: 5px; left: 5px; }
-        .dot-blue::after { background: #2196F3; } .dot-blue { background: #E3F2FD; }
-        .dot-green::after { background: #4CAF50; } .dot-green { background: #E8F5E9; }
-        .dot-yellow::after { background: #FFC107; } .dot-yellow { background: #FFF8E1; }
-        .dot-red::after { background: #F44336; } .dot-red { background: #FFEBEE; }
-
-        /* Table */
+        .status-dot::after { content: ''; position: absolute; width: 8px; height: 8px; border-radius: 50%; top: 4px; left: 4px; }
+        .dot-pending::after { background: #D97706; } .dot-pending { background: #FFF4E5; }
+        .dot-confirmed::after { background: #16A34A; } .dot-confirmed { background: #F0FDF4; }
         table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
         th { text-align: left; color: var(--text-gray); font-size: 0.8rem; padding: 10px; border-bottom: 1px solid var(--border-color); }
         td { padding: 12px 10px; font-size: 0.9rem; border-bottom: 1px solid var(--border-color); }
         .badge { padding: 4px 10px; border-radius: 15px; font-size: 0.75rem; font-weight: 500; }
         .badge-normal { background: #E8F5E9; color: #4CAF50; }
         .badge-abnormal { background: #FFF3E0; color: #E65100; }
-
+        .empty-state { text-align: center; color: #999; padding: 20px; font-size: 0.9rem; }
     </style>
 </head>
 <body>
 
     <div class="sidebar">
         <div>
-            <div class="sidebar-logo">
-                <i class="fa-solid fa-paw"></i> 
-                <div>Petlor <br></div>
-            </div>
+            <div class="sidebar-logo"><i class="fa-solid fa-paw"></i> <div>Petlor</div></div>
             <a href="vetDashboard.php" class="nav-item active"><i class="fa-solid fa-table-columns"></i> Dashboard</a>
             <a href="createprescription.php" class="nav-item"><i class="fa-regular fa-file-lines"></i> New Prescription</a>
             <a href="labresults.php" class="nav-item"><i class="fa-solid fa-flask"></i> Lab Results</a>
             <a href="medicalnotes.php" class="nav-item"><i class="fa-regular fa-pen-to-square"></i> Medical Notes</a>
             <a href="diseasealert.php" class="nav-item"><i class="fa-solid fa-bullhorn"></i> Disease Alerts</a>
         </div>
-
-
     </div>
 
     <div class="main-content">
         <header>
-            <div style="color: #666; font-size: 0.8rem;">Vet Portal / <strong>Welcome back, Dr. 👋</strong></div>
+            <div style="color: #666; font-size: 0.8rem;">Vet Portal / <strong>Welcome back, Dr. <?= htmlspecialchars($first_name) ?> 👋</strong></div>
+            
             <div class="user-profile">
-                <i class="fa-regular fa-bell" style="position: relative;"><span style="position: absolute; top: -2px; right: -2px; width: 7px; height: 7px; background: red; border-radius: 50%;"></span></i>
-                <div class="avatar">DM</div>
-                <div><strong>Dr. Mark Lee</strong><br><span style="font-size: 0.75rem; color: #999;">vet@petlor.com</span></div>
-                <i class="fa-solid fa-right-from-bracket logout-icon"></i>
+                <div class="bell-wrapper" onclick="toggleNotif(event)">
+                    <i class="fa-regular fa-bell"></i>
+                    <?php if($unread_count > 0): ?><span class="notif-badge"><?= $unread_count ?></span><?php endif; ?>
+                    <div class="notif-dropdown" id="notifDropdown" onclick="event.stopPropagation()">
+                        <div class="dropdown-header">
+                            <span>Notifications</span>
+                            <?php if($unread_count > 0): ?><a href="?mark_read=1">Mark all as read</a><?php endif; ?>
+                        </div>
+                        <?php foreach($notifications as $dn): ?>
+                            <div class="dropdown-item <?= $dn['is_read'] == 0 ? 'unread' : '' ?>">
+                                <strong><?= htmlspecialchars($dn['type']) ?> Alert</strong><br>
+                                <?= htmlspecialchars($dn['message']) ?>
+                            </div>
+                        <?php endforeach; ?>
+                    </div>
+                </div>
+                <div class="avatar"><?= htmlspecialchars($initials) ?></div>
+                <div>
+                    <strong>Dr. <?= htmlspecialchars($user_name) ?></strong><br>
+                    <span style="font-size: 0.75rem; color: #999;"><?= htmlspecialchars($user_email) ?></span>
+                </div>
+                <a href="../Auth/logout.php" class="logout-icon" title="Logout"><i class="fa-solid fa-right-from-bracket"></i></a>
             </div>
         </header>
-
+        
         <div class="content-padding">
-            <div class="page-title-row">
-                <div>
-                    <h2>Veterinarian Dashboard</h2>
-                    <p style="color: #666; font-size: 0.9rem;">Today's appointments, recent prescriptions and patients.</p>
-                </div>
-                <button class="add-btn" onclick="window.location.href='createprescription.php'">
-                    <i class="fa-solid fa-plus"></i> New prescription
-                </button>
-            </div>
-
             <div class="stats-grid">
                 <div class="stat-card">
-                    <div class="icon-box"><i class="fa-solid fa-user-group"></i></div>
-                    <div class="stat-info"><p>Appointments Today</p><h3>6</h3><span class="trend">▲ +2 vs yesterday</span></div>
+                    <div class="icon-box"><i class="fa-solid fa-calendar-check"></i></div>
+                    <div class="stat-info"><p>Appointments</p><h3><?= $total_appointments ?></h3></div>
                 </div>
                 <div class="stat-card">
                     <div class="icon-box"><i class="fa-solid fa-users"></i></div>
-                    <div class="stat-info"><p>Active Patients</p><h3>24</h3><span style="font-size: 0.75rem; color: #999;">This month</span></div>
+                    <div class="stat-info"><p>Active Clients</p><h3><?= $active_clients ?></h3></div>
                 </div>
                 <div class="stat-card">
                     <div class="icon-box"><i class="fa-regular fa-file-lines"></i></div>
-                    <div class="stat-info"><p>Prescriptions Issued</p><h3>24</h3><span class="trend">▲ +8%</span></div>
+                    <div class="stat-info"><p>Prescriptions</p><h3><?= $prescriptions_issued ?></h3></div>
                 </div>
                 <div class="stat-card">
                     <div class="icon-box"><i class="fa-solid fa-flask"></i></div>
-                    <div class="stat-info"><p>Lab Results Pending</p><h3>4</h3><span style="font-size: 0.75rem; color: #999;">Awaiting review</span></div>
+                    <div class="stat-info"><p>Lab Reports</p><h3><?= $lab_results_count ?></h3></div>
                 </div>
             </div>
 
@@ -187,110 +218,77 @@
                     <div style="height: 250px;"><canvas id="patientsChart"></canvas></div>
                 </div>
                 <div class="card">
-                    <div class="card-header">Today's schedule</div>
-                    <div class="schedule-item">
-                        <span class="time">09:00</span> <span style="flex:1">Max — Hip recheck</span> <div class="status-dot dot-blue"></div>
-                    </div>
-                    <div class="schedule-item">
-                        <span class="time">10:30</span> <span style="flex:1">Luna — Vaccination</span> <div class="status-dot dot-green"></div>
-                    </div>
-                    <div class="schedule-item">
-                        <span class="time">13:00</span> <span style="flex:1">Bruno — Dental cleaning</span> <div class="status-dot dot-yellow"></div>
-                    </div>
-                    <div class="schedule-item">
-                        <span class="time">15:30</span> <span style="flex:1">Mia — Skin allergy</span> <div class="status-dot dot-red"></div>
-                    </div>
+                    <div class="card-header">Appointments Queue</div>
+                    <?php if(empty($todays_schedule)): ?>
+                        <div class="empty-state">No upcoming appointments.</div>
+                    <?php else: ?>
+                        <?php foreach($todays_schedule as $appt): 
+                            $status_class = (strtolower($appt['status']) == 'pending') ? 'dot-pending' : 'dot-confirmed';
+                        ?>
+                            <div class="schedule-item">
+                                <span class="time"><?= date('H:i', strtotime($appt['start_time'])) ?></span> 
+                                <span style="flex:1">
+                                    <strong><?= htmlspecialchars($appt['pet_name']) ?></strong><br>
+                                    <small><?= htmlspecialchars($appt['owner_name']) ?> — <?= htmlspecialchars($appt['service_type']) ?></small>
+                                </span> 
+                                <div class="status-dot <?= $status_class ?>"></div>
+                            </div>
+                        <?php endforeach; ?>
+                    <?php endif; ?>
                 </div>
             </div>
 
             <div class="card">
-                <div class="card-header">Recent lab results <a href="#" style="color: #1A1A1A; font-size: 0.8rem;">View all</a></div>
-                <table>
-                    <thead>
-                        <tr><th>Pet</th><th>Test</th><th>Date</th><th>Result</th><th>Status</th></tr>
-                    </thead>
-                    <tbody>
-                        <tr><td>🐕 Max</td><td>Complete Blood Count</td><td>2026-04-10</td><td>WBC 8.5 / RBC 6.2 / HGB 14.1</td><td><span class="badge badge-normal">Normal</span></td></tr>
-                        <tr><td>🐕 Max</td><td>Hip X-Ray</td><td>2026-04-10</td><td>Mild left hip subluxation</td><td><span class="badge badge-abnormal">Abnormal</span></td></tr>
-                        <tr><td>🐈 Luna</td><td>Urinalysis</td><td>2026-04-15</td><td>All values within range</td><td><span class="badge badge-normal">Normal</span></td></tr>
-                    </tbody>
-                </table>
+                <div class="card-header">Recent lab results</div>
+                <?php if(empty($recent_labs)): ?>
+                    <div class="empty-state">No recent lab results found.</div>
+                <?php else: ?>
+                    <table>
+                        <thead>
+                            <tr><th>Pet</th><th>Test</th><th>Date</th><th>Status</th></tr>
+                        </thead>
+                        <tbody>
+                            <?php foreach($recent_labs as $lab): ?>
+                                <tr>
+                                    <td><?= (strtolower($lab['species']) == 'cat') ? '🐈' : '🐕' ?> <?= htmlspecialchars($lab['pet_name']) ?></td>
+                                    <td><?= htmlspecialchars($lab['test_name']) ?></td>
+                                    <td><?= date('Y-m-d', strtotime($lab['uploaded_at'])) ?></td>
+                                    <td><span class="badge <?= ($lab['is_critical'] == 1) ? 'badge-abnormal' : 'badge-normal' ?>"><?= ($lab['is_critical'] == 1) ? 'Abnormal' : 'Normal' ?></span></td>
+                                </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                <?php endif; ?>
             </div>
         </div>
     </div>
 
     <script>
-        const ctx = document.getElementById('patientsChart').getContext('2d');
-        
-        let gradient = ctx.createLinearGradient(0, 0, 0, 250);
-        gradient.addColorStop(0, 'rgba(88, 154, 100, 0.2)');   
-        gradient.addColorStop(1, 'rgba(88, 154, 100, 0)');
+        function toggleNotif(event) { event.stopPropagation(); document.getElementById('notifDropdown').classList.toggle('show'); }
+        window.onclick = function(event) { if (!event.target.closest('.bell-wrapper')) { var dropdowns = document.getElementsByClassName("notif-dropdown"); for (var i = 0; i < dropdowns.length; i++) { if (dropdowns[i].classList.contains('show')) dropdowns[i].classList.remove('show'); } } }
 
-        const verticalLinePlugin = {
-            id: 'verticalLinePlugin',
-            afterDraw: chart => {
-                if (chart.tooltip?._active?.length) {
-                    let x = chart.tooltip._active[0].element.x;
-                    let y = chart.tooltip._active[0].element.y;
-                    let yAxis = chart.scales.y;
-                    let ctx = chart.ctx;
-                    ctx.save();
-                    ctx.beginPath();
-                    ctx.moveTo(x, y);
-                    ctx.lineTo(x, yAxis.bottom);
-                    ctx.lineWidth = 1;
-                    ctx.strokeStyle = '#D1D5DB';
-                    ctx.stroke();
-                    ctx.restore();
-                }
-            }
-        };
+        const chartLabels = <?= json_encode($chart_labels) ?>;
+        const chartData = <?= json_encode($chart_data) ?>;
+        const ctx = document.getElementById('patientsChart').getContext('2d');
+        let gradient = ctx.createLinearGradient(0, 0, 0, 250);
+        gradient.addColorStop(0, 'rgba(88, 154, 100, 0.2)'); gradient.addColorStop(1, 'rgba(88, 154, 100, 0)');
 
         new Chart(ctx, {
             type: 'line',
             data: {
-                labels: ['Nov', 'Dec', 'Jan', 'Feb', 'Mar', 'Apr'],
+                labels: chartLabels,
                 datasets: [{
-                    data: [36, 50, 49, 63, 61, 76],
+                    data: chartData,
                     borderColor: '#589A64',
                     backgroundColor: gradient,
                     borderWidth: 2,
                     tension: 0.4,
                     fill: true,
-                    pointRadius: 0,
-                    pointHoverRadius: 5,
-                    pointBackgroundColor: '#fff',
-                    pointBorderColor: '#589A64',
-                    pointBorderWidth: 2
+                    pointRadius: 0
                 }]
             },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: { display: false },
-                    tooltip: {
-                        backgroundColor: '#fff',
-                        titleColor: '#666',
-                        bodyColor: '#589A64',
-                        borderColor: '#eee',
-                        borderWidth: 1,
-                        padding: 10,
-                        displayColors: false,
-                        callbacks: {
-                            label: (context) => `patients : ${context.parsed.y}`
-                        }
-                    }
-                },
-                scales: {
-                    y: { beginAtZero: true, max: 80, ticks: { stepSize: 20 }, grid: { color: '#f5f5f5' }, border: {display: false} },
-                    x: { grid: { display: false } }
-                }
-            },
-            plugins: [verticalLinePlugin]
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true }, x: { grid: { display: false } } } }
         });
     </script>
 </body>
 </html>
-
-
