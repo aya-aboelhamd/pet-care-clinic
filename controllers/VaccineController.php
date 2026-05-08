@@ -17,22 +17,18 @@ $vaccineModel = new VaccineModel($db);
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['schedule_vaccine'])) {
     
     $pet_id = $_POST['pet_id'] ?? '';
-    $species = $_POST['species'] ?? ''; // هنبعتها هيدن من الفورم
+    $species = $_POST['species'] ?? '';
     $vaccine_name = $_POST['vaccine_name'] ?? '';
     $last_date = !empty($_POST['last_date']) ? $_POST['last_date'] : null;
 
-    // Alternate Course 1 & 2: User enters incomplete/invalid data -> Validation Error
     if (empty($pet_id) || empty($vaccine_name) || empty($species)) {
         header("Location: ../views/petOwner/vaccinationSchedule.php?error=missing_fields");
         exit();
     }
 
-    // حساب الميعاد الجاي من الموديل
     $next_due_date = $vaccineModel->calculateNextDueDate($species, $vaccine_name, $last_date);
 
-    // حفظ الجدول في الداتا بيز
     if ($vaccineModel->saveSchedule($pet_id, $vaccine_name, $last_date, $next_due_date)) {
-        // Post-condition: Schedule is generated and saved
         header("Location: ../views/petOwner/vaccinationSchedule.php?success=scheduled&date=" . urlencode($next_due_date) . "&vac=" . urlencode($vaccine_name));
         exit();
     } else {

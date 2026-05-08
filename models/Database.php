@@ -3,7 +3,7 @@
 
 class Database {
     private $host = "localhost";
-    private $db_name = "petlor";
+    private $db_name = "petlor"; // اتأكد إن ده نفس اسم الداتابيز في phpMyAdmin
     private $username = "root";
     private $password = "";
     public $conn;
@@ -17,6 +17,7 @@ class Database {
 
             
         } catch(PDOException $exception) {
+            // السطر ده هيطبعلك المشكلة لو فيه إيرور
             echo "Connection error: " . $exception->getMessage();
         }
         return $this->conn;

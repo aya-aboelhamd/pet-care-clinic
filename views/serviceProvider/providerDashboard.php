@@ -55,7 +55,8 @@ $stmt = $db->prepare("SELECT COUNT(*) FROM booking WHERE provider_id = ? AND DAT
 $stmt->execute([$user_id]);
 $checkins_today = $stmt->fetchColumn();
 
-$stmt = $db->prepare("SELECT COALESCE(SUM(total_price), 0) FROM booking WHERE provider_id = ? AND MONTH(start_time) = MONTH(CURDATE()) AND YEAR(start_time) = YEAR(CURDATE()) AND (status = 'Completed' OR status = 'Confirmed')");
+// التعديل حصل هنا: ضفنا Paid ومسحنا Confirmed لأن المؤكد لسه متدفعش
+$stmt = $db->prepare("SELECT COALESCE(SUM(total_price), 0) FROM booking WHERE provider_id = ? AND MONTH(start_time) = MONTH(CURDATE()) AND YEAR(start_time) = YEAR(CURDATE()) AND status IN ('Completed', 'Paid')");
 $stmt->execute([$user_id]);
 $monthly_earnings = $stmt->fetchColumn();
 
@@ -361,7 +362,7 @@ if ($max_count == 0) $max_count = 1;
                         <?php foreach ($todays_bookings as $booking): ?>
                             <?php
                                 $badge_class = 'badge-pending';
-                                if (strtolower($booking['status']) == 'confirmed' || strtolower($booking['status']) == 'completed') {
+                                if (in_array(strtolower($booking['status']), ['confirmed', 'completed', 'paid'])) {
                                     $badge_class = 'badge-confirmed';
                                 }
                             ?>

@@ -20,7 +20,7 @@ $initials = strtoupper(substr($first_name, 0, 1));
 
 
 $stmt = $db->prepare("
-    SELECT ci.id as item_id, ci.quantity, p.name, p.price, p.icon 
+    SELECT ci.id as item_id, ci.quantity, p.id as product_id, p.name, p.price, p.icon 
     FROM cartitem ci 
     JOIN cart c ON ci.cart_id = c.id 
     JOIN product p ON ci.product_id = p.id 
@@ -39,7 +39,6 @@ $total_price = 0;
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        /* نفس الستايل بتاعك اللي فوق بالظبط */
         :root { --primary-green: #589A64; --bg-light: #F8FAF8; --sidebar-width: 240px; --text-dark: #1A1A1A; --text-gray: #666; --border-color: #E0E0E0; }
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
         body { background-color: var(--bg-light); display: flex; height: 100vh; overflow: hidden; }
@@ -54,7 +53,8 @@ $total_price = 0;
         .content-padding { padding: 2rem; }
         .checkout-container { display: grid; grid-template-columns: 1fr 350px; gap: 2rem; align-items: start; }
         .cart-item { background: white; border: 1px solid var(--border-color); border-radius: 12px; padding: 1.5rem; margin-bottom: 1rem; display: flex; gap: 1.5rem; align-items: center; }
-        .item-img { width: 80px; height: 80px; background: #F0F4F0; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; }        .item-img img { width: 100%; height: 100%; object-fit: contain; }
+        .item-img { width: 80px; height: 80px; background: #F0F4F0; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; }        
+        .item-img img { width: 100%; height: 100%; object-fit: contain; }
         .item-details { flex-grow: 1; }
         .item-details h4 { font-size: 1.1rem; margin-bottom: 4px; }
         .qty-control { margin-top: 10px; font-size: 0.9rem; color: #666;}
@@ -130,9 +130,13 @@ $total_price = 0;
                     <div class="summary-row"><span>Subtotal</span><span>$<?= number_format($total_price, 2) ?></span></div>
                     <div class="summary-row"><span>Shipping</span><span style="color: var(--primary-green);">Free</span></div>
                     <div class="summary-row summary-total"><span>Total</span><span>$<?= number_format($total_price, 2) ?></span></div>
-                    <button class="place-order-btn" <?= empty($cart_items) ? 'disabled style="background:#ccc; cursor:not-allowed;"' : "onclick=\"alert('Order placed successfully!'); window.location.href='petownerDashboard.php'\"" ?>>
-                        Proceed to Checkout
-                    </button>
+                    
+                    <form method="POST" action="../../controllers/CartController.php">
+                        <input type="hidden" name="action" value="place_order">
+                        <button type="submit" class="place-order-btn" <?= empty($cart_items) ? 'disabled style="background:#ccc; cursor:not-allowed;"' : '' ?>>
+                            Proceed to Checkout
+                        </button>
+                    </form>
                 </div>
             </div>
         </div>

@@ -34,7 +34,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $gender = $_POST['gender'];
     $dob = $_POST['date_of_birth'];
     $weight = $_POST['weight'];
-    $allergies = $_POST['allergies']; // جاية من الحقل المخفي
+    $allergies = $_POST['allergies']; // جاية من الحقل المخفي مفصولة بفاصلة
     $medical_notes = trim($_POST['medical_notes']);
 
     if (!empty($name) && !empty($species)) {
@@ -43,7 +43,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $stmt = $db->prepare($query);
         
         if ($stmt->execute([$user_id, $name, $species, $breed, $gender, $dob, $weight, $allergies, $medical_notes])) {
-            // توجيه لصفحة My Pets بعد النجاح
             header("Location: mypets.php?success=pet_added");
             exit();
         } else {
@@ -77,16 +76,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         body { background-color: var(--bg-light); display: flex; height: 100vh; overflow: hidden; }
 
         /* --- Sidebar --- */
-        .sidebar {
-            width: var(--sidebar-width);
-            background: white;
-            border-right: 1px solid var(--border-color);
-            display: flex;
-            flex-direction: column;
-            padding: 1.5rem 0;
-            flex-shrink: 0;
-        }
-
+        .sidebar { width: var(--sidebar-width); background: white; border-right: 1px solid var(--border-color); display: flex; flex-direction: column; padding: 1.5rem 0; flex-shrink: 0; }
         .sidebar-logo { padding: 0 1.5rem 2rem; font-weight: 700; font-size: 1.2rem; display: flex; align-items: center; gap: 10px; }
         .nav-item { padding: 0.8rem 1.5rem; display: flex; align-items: center; gap: 12px; text-decoration: none; color: var(--text-gray); font-size: 0.9rem; font-weight: 500; transition: 0.2s; }
         .nav-item.active { background-color: var(--primary-green); color: white; margin: 0 10px; border-radius: 8px; }
@@ -104,13 +94,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
         /* --- Form Styling --- */
         .form-card { background: white; border: 1px solid var(--border-color); border-radius: 15px; padding: 2.5rem; box-shadow: 0 2px 10px rgba(0,0,0,0.02); }
-        
         .form-header { margin-bottom: 2rem; border-bottom: 1px solid #f0f0f0; padding-bottom: 1rem; }
         .form-header h2 { font-size: 1.5rem; color: var(--text-dark); }
-
         .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
         .full-width { grid-column: span 2; }
-
         .form-group { margin-bottom: 1.5rem; }
         .form-group label { display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 8px; color: var(--text-dark); }
         .form-group input, .form-group select, .form-group textarea {
@@ -118,17 +105,21 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         }
         .form-group input:focus, .form-group textarea:focus, .form-group select:focus { border-color: var(--primary-green); box-shadow: 0 0 0 3px rgba(88, 154, 100, 0.1); }
 
-        .tags-input-area { background: #fcfcfc; border: 1px solid var(--border-color); border-radius: 8px; padding: 10px; display: flex; flex-wrap: wrap; gap: 8px; align-items: center;}
-        .tag-pill { background: #eee; padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; display: flex; align-items: center; gap: 5px; }
-        .tag-pill i { cursor: pointer; color: #999; }
-        .tag-pill i:hover { color: #d32f2f; }
+        /* --- Allergy Buttons Styling --- */
+        .allergy-grid { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 5px; }
+        .allergy-btn {
+            background: #f5f5f5; border: 1px solid var(--border-color); padding: 8px 16px; border-radius: 20px; 
+            font-size: 0.85rem; color: var(--text-gray); cursor: pointer; transition: 0.2s; user-select: none;
+            display: flex; align-items: center; gap: 6px; font-weight: 500;
+        }
+        .allergy-btn:hover { border-color: var(--primary-green); color: var(--primary-green); }
+        .allergy-btn.selected { background: var(--primary-green); color: white; border-color: var(--primary-green); }
 
         .form-actions { display: flex; justify-content: flex-end; gap: 15px; margin-top: 2rem; border-top: 1px solid #f0f0f0; padding-top: 2rem; }
         .btn { padding: 0.8rem 2rem; border-radius: 8px; font-weight: 600; cursor: pointer; border: none; transition: 0.2s; }
         .btn-cancel { background: #f5f5f5; color: var(--text-gray); text-decoration: none; display: inline-block; text-align: center;}
         .btn-save { background: var(--primary-green); color: white; }
         .btn:hover { opacity: 0.9; }
-
         .alert-error { background: #ffebee; color: #c62828; padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem; font-size: 0.9rem; border: 1px solid #ef9a9a;}
     </style>
 </head>
@@ -145,7 +136,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         <a href="booking.php" class="nav-item"><i class="fa-solid fa-calendar-check"></i> Book a Service</a>
         <a href="symptomChecker.php" class="nav-item"><i class="fa-solid fa-bullhorn"></i> Symptom Checker</a>
         <a href="reportLostPet.php" class="nav-item"><i class="fa-solid fa-bullhorn"></i> Report Lost Pet</a>
-       
     </div>
 
     <div class="main-content">
@@ -170,7 +160,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                     <div class="alert-error"><?= $error ?></div>
                 <?php endif; ?>
 
-                <!-- تم إضافة method POST -->
                 <form method="POST" action="">
                     
                     <div class="form-grid">
@@ -209,13 +198,16 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                         </div>
 
                         <div class="form-group full-width">
-                            <label>Known Allergies</label>
-                            <div class="tags-input-area" id="tagsContainer">
-                                <!-- التاجز هتظهر هنا بالـ JS -->
-                                <input type="text" id="allergyInput" placeholder="Type and press Enter..." style="border:none; width: 160px; padding: 4px; outline:none; background:transparent;">
+                            <label>Known Allergies (Select all that apply)</label>
+                            <div class="allergy-grid" id="allergyGrid">
+                                <div class="allergy-btn" data-value="Chicken">🐔 Chicken</div>
+                                <div class="allergy-btn" data-value="Beef">🥩 Beef</div>
+                                <div class="allergy-btn" data-value="Fish">🐟 Fish</div>
+                                <div class="allergy-btn" data-value="Dairy">🥛 Dairy</div>
+                                <div class="allergy-btn" data-value="Grain">🌾 Grain/Wheat</div>
+                                <div class="allergy-btn" data-value="Soy">🌿 Soy</div>
+                                <div class="allergy-btn" data-value="Eggs">🥚 Eggs</div>
                             </div>
-                            <small style="color: #999; font-size: 0.7rem; margin-top: 5px; display: block;">Press Enter after typing each allergy. This will help us flag unsafe products.</small>
-                            <!-- حقل مخفي هنخزن فيه الكلمات عشان تتبعت للداتا بيز -->
                             <input type="hidden" name="allergies" id="hiddenAllergiesInput">
                         </div>
 
@@ -234,48 +226,30 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         </div>
     </div>
 
-    <!-- سكريبت بسيط عشان يشغل نظام الـ Tags بتاع الحساسية -->
     <script>
-        const allergyInput = document.getElementById('allergyInput');
-        const tagsContainer = document.getElementById('tagsContainer');
-        const hiddenAllergiesInput = document.getElementById('hiddenAllergiesInput');
-        let allergiesArray = [];
+        // سكريبت للتحكم في زراير الحساسية
+        const allergyBtns = document.querySelectorAll('.allergy-btn');
+        const hiddenInput = document.getElementById('hiddenAllergiesInput');
+        let selectedAllergies = [];
 
-        allergyInput.addEventListener('keydown', function(e) {
-            if (e.key === 'Enter') {
-                e.preventDefault(); // منع الفورم من الإرسال عند الضغط على انتر
-                const value = allergyInput.value.trim();
+        allergyBtns.forEach(btn => {
+            btn.addEventListener('click', function() {
+              
+                this.classList.toggle('selected');
                 
-                if (value !== '' && !allergiesArray.includes(value)) {
-                    allergiesArray.push(value);
-                    renderTags();
-                    allergyInput.value = '';
+                const value = this.getAttribute('data-value');
+                
+                
+                if (this.classList.contains('selected')) {
+                    selectedAllergies.push(value);
+                } else {
+                    selectedAllergies = selectedAllergies.filter(item => item !== value);
                 }
-            }
-        });
-
-        function removeTag(index) {
-            allergiesArray.splice(index, 1);
-            renderTags();
-        }
-
-        function renderTags() {
-            // نمسح التاجز القديمة ونسيب الانبوت بس
-            const tags = tagsContainer.querySelectorAll('.tag-pill');
-            tags.forEach(tag => tag.remove());
-
-            // نرسم التاجز الجديدة
-            allergiesArray.slice().reverse().forEach((allergy, index) => {
-                const actualIndex = allergiesArray.length - 1 - index;
-                const span = document.createElement('span');
-                span.className = 'tag-pill';
-                span.innerHTML = `${allergy} <i class="fa-solid fa-xmark" onclick="removeTag(${actualIndex})"></i>`;
-                tagsContainer.insertBefore(span, allergyInput);
+                
+                
+                hiddenInput.value = selectedAllergies.join(', ');
             });
-
-            // نحدث قيمة الحقل المخفي عشان تروح للداتا بيز مفصولة بفاصلة
-            hiddenAllergiesInput.value = allergiesArray.join(',');
-        }
+        });
     </script>
 </body>
 </html>

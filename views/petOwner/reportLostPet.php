@@ -11,7 +11,38 @@ $database = new Database();
 $db = $database->getConnection();
 
 $user_id = $_SESSION['user_id'];
-$user_name = $_SESSION['user_name'];
+
+$stmt = $db->prepare("SELECT name, email FROM users WHERE id = ?");
+$stmt->execute([$user_id]);
+$user = $stmt->fetch(PDO::FETCH_ASSOC);
+
+$user_name = $user['name'] ?? 'User';
+$user_email = $user['email'] ?? 'user@petlor.com';
+
+$name_parts = explode(' ', trim($user_name));
+$first_name = $name_parts[0];
+$initials = strtoupper(substr($first_name, 0, 1));
+if (isset($name_parts[1])) {
+    $initials .= strtoupper(substr($name_parts[1], 0, 1));
+} else {
+    $initials .= strtoupper(substr($first_name, 1, 1) ?: '');
+}
+
+$stmt = $db->prepare("SELECT * FROM notification WHERE user_id = ? ORDER BY created_at DESC LIMIT 10");
+$stmt->execute([$user_id]);
+$dropdown_notifications = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+$unread_count = 0;
+foreach ($dropdown_notifications as $n) {
+    if ($n['is_read'] == 0) $unread_count++;
+}
+
+if (isset($_GET['mark_read'])) {
+    $stmt = $db->prepare("UPDATE notification SET is_read = 1 WHERE user_id = ?");
+    $stmt->execute([$user_id]);
+    header("Location: reportLostPet.php");
+    exit();
+}
 
 $stmt = $db->prepare("SELECT id, name, species, breed FROM pet WHERE user_id = ?");
 $stmt->execute([$user_id]);

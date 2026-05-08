@@ -13,22 +13,61 @@ $user_id = $_SESSION['user_id'];
 $stmt = $db->prepare("SELECT name, email FROM users WHERE id = ?");
 $stmt->execute([$user_id]);
 $user = $stmt->fetch(PDO::FETCH_ASSOC);
-$user_name = $user['name'] ?? 'User';
-$first_name = explode(' ', trim($user_name))[0];
-$initials = strtoupper(substr($first_name, 0, 1));
 
+$user_name = $user['name'] ?? 'User';
+$user_email = $user['email'] ?? 'user@petlor.com';
+
+$name_parts = explode(' ', trim($user_name));
+$first_name = $name_parts[0];
+$initials = strtoupper(substr($first_name, 0, 1));
+if (isset($name_parts[1])) {
+    $initials .= strtoupper(substr($name_parts[1], 0, 1));
+} else {
+    $initials .= strtoupper(substr($first_name, 1, 1) ?: '');
+}
+
+$stmt = $db->prepare("SELECT * FROM notification WHERE user_id = ? ORDER BY created_at DESC LIMIT 10");
+$stmt->execute([$user_id]);
+$dropdown_notifications = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+$unread_count = 0;
+foreach ($dropdown_notifications as $n) {
+    if ($n['is_read'] == 0) $unread_count++;
+}
+
+if (isset($_GET['mark_read'])) {
+    $stmt = $db->prepare("UPDATE notification SET is_read = 1 WHERE user_id = ?");
+    $stmt->execute([$user_id]);
+    header("Location: marketplace.php");
+    exit();
+}
+
+// جلب الحيوانات
 $stmt = $db->prepare("SELECT id, name, medical_notes, allergies FROM pet WHERE user_id = ?");
 $stmt->execute([$user_id]);
 $pets = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 $current_pet_id = $_GET['pet_id'] ?? 'all';
 $current_pet = null;
+$pet_health_string = "";
+
 if ($current_pet_id != 'all') {
     foreach ($pets as $p) {
         if ($p['id'] == $current_pet_id) {
             $current_pet = $p;
             break;
         }
+    }
+    
+    // UC-12: جلب السجلات الطبية للحيوان للبحث عن الموانع
+    if ($current_pet) {
+        $stmt_med = $db->prepare("SELECT diagnosis FROM medicalrecord WHERE pet_id = ?");
+        $stmt_med->execute([$current_pet_id]);
+        $med_records = $stmt_med->fetchAll(PDO::FETCH_ASSOC);
+        foreach ($med_records as $record) {
+            $pet_health_string .= strtolower($record['diagnosis']) . " ";
+        }
+        $pet_health_string .= strtolower(($current_pet['allergies'] ?? '') . ' ' . ($current_pet['medical_notes'] ?? ''));
     }
 }
 
@@ -54,7 +93,23 @@ $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
         .main-content { flex-grow: 1; overflow-y: auto; display: flex; flex-direction: column; }
         header { background: white; padding: 0.8rem 2rem; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); }
         .user-profile { display: flex; align-items: center; gap: 12px; font-size: 0.85rem; }
-        .avatar-circle { width: 35px; height: 35px; background: #4CAF50; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; }
+        .avatar { width: 35px; height: 35px; background: #4CAF50; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; text-transform: uppercase;}
+        
+        .bell-wrapper { position: relative; cursor: pointer; display: flex; align-items: center; font-size: 1.1rem; }
+        .notif-badge { position: absolute; top: -5px; right: -5px; background: #DC2626; color: white; font-size: 0.6rem; font-weight: bold; padding: 2px 5px; border-radius: 50%; }
+        .notif-dropdown { display: none; position: absolute; top: 35px; right: 0; width: 320px; background: white; border: 1px solid var(--border-color); border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); z-index: 1000; max-height: 400px; overflow-y: auto; cursor: default;}
+        .notif-dropdown.show { display: block; animation: fadeIn 0.2s ease; }
+        .dropdown-header { padding: 12px 15px; border-bottom: 1px solid var(--border-color); font-weight: bold; font-size: 0.9rem; display: flex; justify-content: space-between; align-items: center;}
+        .dropdown-header a { font-size: 0.75rem; color: var(--primary-green); text-decoration: none; font-weight: normal; }
+        .dropdown-item { padding: 12px 15px; border-bottom: 1px solid #F5F5F5; font-size: 0.8rem; line-height: 1.4; color: var(--text-dark); }
+        .dropdown-item:last-child { border-bottom: none; }
+        .dropdown-item.unread { background: #F0FDF4; border-left: 3px solid var(--primary-green); }
+        .dropdown-time { font-size: 0.7rem; color: #999; margin-top: 5px; }
+        
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+        
+        .logout-btn { color: var(--text-gray); transition: 0.2s; font-size: 1.1rem; }
+        .logout-btn:hover { color: #d32f2f; }
         .content-padding { padding: 2rem; }
         .market-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
         .view-cart-btn { background: white; border: 1px solid var(--border-color); padding: 0.6rem 1rem; border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 8px; font-weight: 600; }
@@ -97,8 +152,40 @@ $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
         <header>
             <div style="color: #666; font-size: 0.8rem;">Owner Portal / <strong>Welcome back, <?= htmlspecialchars($first_name) ?> 👋</strong></div>
             <div class="user-profile">
-                <div class="avatar-circle"><?= $initials ?></div>
-                <div><strong><?= htmlspecialchars($user_name) ?></strong></div>
+                
+                <div class="bell-wrapper" onclick="toggleNotif(event)">
+                    <i class="fa-regular fa-bell"></i>
+                    <?php if($unread_count > 0): ?>
+                        <span class="notif-badge"><?= $unread_count ?></span>
+                    <?php endif; ?>
+                    
+                    <div class="notif-dropdown" id="notifDropdown" onclick="event.stopPropagation()">
+                        <div class="dropdown-header">
+                            <span>Notifications</span>
+                            <?php if($unread_count > 0): ?>
+                                <a href="?mark_read=1">Mark all as read</a>
+                            <?php endif; ?>
+                        </div>
+                        <?php if(empty($dropdown_notifications)): ?>
+                            <div class="dropdown-item" style="text-align: center; color: #999; padding: 20px;">No new notifications</div>
+                        <?php else: ?>
+                            <?php foreach($dropdown_notifications as $dn): ?>
+                                <div class="dropdown-item <?= $dn['is_read'] == 0 ? 'unread' : '' ?>">
+                                    <strong style="<?= $dn['type'] == 'Recall' ? 'color:#DC2626;' : '' ?>"><?= htmlspecialchars($dn['type']) ?> Alert</strong><br>
+                                    <?= htmlspecialchars($dn['message']) ?>
+                                    <div class="dropdown-time"><?= date('M j, Y g:i A', strtotime($dn['created_at'])) ?></div>
+                                </div>
+                            <?php endforeach; ?>
+                        <?php endif; ?>
+                    </div>
+                </div>
+
+                <div class="avatar"><?= htmlspecialchars($initials) ?></div>
+                <div>
+                    <strong><?= htmlspecialchars($user_name) ?></strong><br>
+                    <span style="font-size: 0.75rem; color: #999;"><?= htmlspecialchars($user_email) ?></span>
+                </div>
+                <a href="../Auth/logout.php" class="logout-btn" title="Logout"><i class="fa-solid fa-right-from-bracket"></i></a>
             </div>
         </header>
 
@@ -124,7 +211,12 @@ $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
                     <button class="upload-btn" onclick="alert('Redirecting to document verification system...')"><i class="fa-solid fa-file-arrow-up"></i> Upload Prescription Document</button>
                 </div>
             <?php elseif(isset($_GET['error']) && $_GET['error'] == 'select_pet_first'): ?>
-                <div class="alert-error"><i class="fa-solid fa-circle-exclamation"></i> Please select a specific pet from the dropdown before adding prescription items.</div>
+                <div class="alert-error"><i class="fa-solid fa-circle-exclamation"></i> Please select a specific pet from the dropdown before adding restricted items.</div>
+            <?php elseif(isset($_GET['error']) && $_GET['error'] == 'contraindicated'): ?>
+                <div class="alert-error">
+                    <div><strong><i class="fa-solid fa-triangle-exclamation"></i> Action Blocked: Severe Health Risk</strong></div>
+                    <div style="font-size: 0.85rem;">You attempted to add a contraindicated item to your cart. This action has been blocked to protect your pet's health, and the attempt has been logged in the medical record for your vet to review.</div>
+                </div>
             <?php endif; ?>
 
             <div class="pet-selector">
@@ -146,12 +238,12 @@ $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
                         $warning_msg = "";
                         
                         if ($current_pet && !empty($prod['contraindicated_condition'])) {
-                            $condition = strtolower($prod['contraindicated_condition']);
-                            $pet_health = strtolower($current_pet['allergies'] . ' ' . $current_pet['medical_notes']);
+                            $condition = strtolower(trim($prod['contraindicated_condition']));
                             
-                            if (strpos($pet_health, $condition) !== false) {
+                            // فحص السجل الطبي المجمع
+                            if (strpos($pet_health_string, $condition) !== false) {
                                 $is_safe = false;
-                                $warning_msg = "Contains " . ucfirst($condition) . " — Not safe for " . htmlspecialchars($current_pet['name']);
+                                $warning_msg = "Contains " . ucfirst($condition) . " — Not Suitable for " . htmlspecialchars($current_pet['name']);
                             }
                         }
                     ?>
@@ -198,6 +290,25 @@ $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
                 return false;
             }
             return true;
+        }
+    </script>
+
+    <script>
+        function toggleNotif(event) {
+            event.stopPropagation();
+            document.getElementById('notifDropdown').classList.toggle('show');
+        }
+
+        window.onclick = function(event) {
+            if (!event.target.closest('.bell-wrapper')) {
+                var dropdowns = document.getElementsByClassName("notif-dropdown");
+                for (var i = 0; i < dropdowns.length; i++) {
+                    var openDropdown = dropdowns[i];
+                    if (openDropdown.classList.contains('show')) {
+                        openDropdown.classList.remove('show');
+                    }
+                }
+            }
         }
     </script>
 </body>

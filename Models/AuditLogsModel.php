@@ -10,7 +10,7 @@ class AuditLogsModel {
         try {
             $stmt = $this->db->prepare("
                 SELECT a.created_at, u.email as actor, a.action, a.target, a.ip_address 
-                FROM activitylog a
+                FROM audit_logs a
                 LEFT JOIN users u ON a.user_id = u.id
                 ORDER BY a.created_at DESC
             ");
@@ -24,7 +24,7 @@ class AuditLogsModel {
     public function logAction($user_id, $action, $target) {
         try {
             $ip_address = $_SERVER['REMOTE_ADDR'] ?? 'Unknown';
-            $stmt = $this->db->prepare("INSERT INTO activitylog (user_id, action, target, ip_address) VALUES (?, ?, ?, ?)");
+            $stmt = $this->db->prepare("INSERT INTO audit_logs (user_id, action, target, ip_address) VALUES (?, ?, ?, ?)");
             return $stmt->execute([$user_id, $action, $target, $ip_address]);
         } catch (Exception $e) {
             return false;
